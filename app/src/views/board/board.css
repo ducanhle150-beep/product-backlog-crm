@@ -1,0 +1,20 @@
+.board { flex: 1; display: flex; gap: 14px; padding: 14px 16px; overflow-x: auto; overflow-y: hidden; align-items: flex-start; }
+.kcol { width: 260px; flex-shrink: 0; max-height: 100%; display: flex; flex-direction: column; background: var(--bg-raised); border-radius: var(--radius-lg); }
+.kcol.is-over { outline: 1px solid var(--accent); }
+.kcol__head { display: flex; align-items: center; gap: 8px; padding: 12px 14px 8px; }
+.kcol__body { display: flex; flex-direction: column; gap: 8px; padding: 4px 8px; overflow-y: auto; min-height: 8px; }
+.kcol--empty .kcol__body { padding: 0; }
+.kcol__more { padding: 6px; color: var(--text-2); text-align: center; border-radius: var(--radius); }
+.kcol__more:hover { background: var(--bg-hover); }
+.kcol__new { display: flex; align-items: center; gap: 6px; padding: 10px 14px 12px; color: var(--text-3); }
+.kcol__new:hover { color: var(--text); }
+.board__add { width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--radius); background: var(--bg-raised); color: var(--text-2); display: flex; align-items: center; justify-content: center; }
+
+.kcard { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-lg); padding: 10px 12px; cursor: grab; touch-action: none; }
+.kcard:hover { border-color: #3a3a3a; }
+.kcard.is-dragging { opacity: .85; box-shadow: 0 8px 24px rgba(0,0,0,.5); cursor: grabbing; }
+.kcard__top { display: flex; align-items: center; gap: 7px; }
+.kcard__top .avatar + .avatar { margin-left: -2px; }
+.kcard__title { margin-top: 6px; font-size: 13.5px; font-weight: 500; color: var(--text); line-height: 1.4; }
+.kcard__meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.issue-key { color: var(--text-2); font-size: 12.5px; letter-spacing: .03em; white-space: nowrap; }

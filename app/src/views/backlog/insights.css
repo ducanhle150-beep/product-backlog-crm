@@ -1,0 +1,10 @@
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.ins-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.signal { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; margin-bottom: 6px; border-left: 3px solid; background: var(--bg-card); border-radius: 4px; font-size: 12.5px; }
+.signal svg { flex-shrink: 0; margin-top: 1px; }
+.deep-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.barlist { display: flex; flex-direction: column; gap: 8px; }
+.barlist__row { display: grid; grid-template-columns: 170px 1fr 60px; align-items: center; gap: 10px; }
+.barlist__track { height: 10px; background: #262626; border-radius: 3px; overflow: hidden; }
+.barlist__track > span { display: block; height: 100%; border-radius: 0 4px 4px 0; }
+.barlist__val { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-2); }

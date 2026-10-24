@@ -1,0 +1,9 @@
+node_modules/
+.pw-profile/
+.DS_Store
+dist/
+
+# Dữ liệu nội bộ / tài liệu nguồn — không đưa vào git
+screenshots/
+quan-ly-cong-viec/
+backlog-docs/
