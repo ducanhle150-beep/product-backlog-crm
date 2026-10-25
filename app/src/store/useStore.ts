@@ -97,7 +97,7 @@ export const useStore = create<Store>()(
         const issue: Issue = {
           id: `i${num}`, key: `FRAUD_F-${num}`, num, kind: 'backlog', type: 'story', status: 'backlog', priority: 'medium',
           labelIds: [], createdAt: nowIso(), updatedAt: nowIso(), rank: maxRank + 1000, description: '',
-          acceptanceCriteria: [], dor: {}, dod: {}, invest: {}, blockedBy: [], whyNow: '', successMetric: '',
+          acceptanceCriteria: [], dor: {}, invest: {}, blockedBy: [], whyNow: '', successMetric: '',
           scores: {}, scoreReasoning: '', activity: [{ at: nowIso(), text: patch.kind === 'task' ? 'Tạo issue' : 'Tạo item' }],
           ...patch,
         };

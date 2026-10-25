@@ -214,9 +214,6 @@ export function SettingsView() {
           <ChecklistEditor items={settings.dorItems} onChange={(dorItems) => up({ dorItems })} autoIds={['dor1', 'dor2', 'dor3', 'dor4', 'dor5']} />
         </Card>
 
-        <Card title="Definition of Done" desc="Item chỉ được chuyển sang DONE (Kanban) khi tick đủ các tiêu chí này.">
-          <ChecklistEditor items={settings.dodItems} onChange={(dodItems) => up({ dodItems })} />
-        </Card>
 
         <Card title="Prioritization template" desc="Template quyết định điểm hiển thị trong Danh sách, Ưu tiên, Sprint Planning và panel chi tiết. Điểm đã chấm theo template khác vẫn được giữ khi đổi qua lại.">
           <TemplatePicker />

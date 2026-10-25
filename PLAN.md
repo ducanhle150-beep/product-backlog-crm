@@ -32,6 +32,9 @@
   - Sprint Planning: thêm **Xoá sprint** (chỉ sprint planned, có xác nhận; item trả về Product Backlog). Danh sách: bỏ dòng "Tạo sprint" và dòng sprint đang chạy — tạo/xoá sprint chỉ ở Sprint Planning.
   - Danh sách: mỗi dòng chỉ hiện **chip Epic** (màu epic), không hiện labels (labels vẫn xem/sửa trong panel chi tiết); bỏ badge điểm ưu tiên khỏi dòng — điểm chỉ xem ở tab Ưu tiên (và Sprint Planning/Refinement).
   - Nút **Filter** chạy thật (giống CRM gốc): menu 4 nhóm Người được giao · Ưu tiên · Loại · Epic → danh sách con có nút ‹ quay lại, chọn nhiều; có "Chưa giao" / "Không thuộc epic nào", badge số filter, "Xoá tất cả filter". Áp dụng cho Danh sách, Ưu tiên và Bảng.
+- [x] **V1.3.5** (commit)
+  - Bỏ hẳn **Definition of Done**: card trong Thiết lập, danh sách tiêu chí và dữ liệu DoD trên item/issue (luồng kéo sang DONE đã không dùng DoD từ V1.3).
+- [ ] **V1.4** (tiếp theo)
 - [ ] Chờ user: tên đối thủ Fraud thật, DoR/DoD của team, độ dài sprint, màu label Documentation
 
 Chạy: `cd /Users/bssgroup/crm-backlog/app && npm run dev` → http://localhost:5173 · Test: `npm test`

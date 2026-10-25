@@ -219,7 +219,6 @@ export function buildIssues(settings: Settings): Issue[] {
       description: '',
       acceptanceCriteria: (st?.ac ?? []).map((text, i) => ({ id: `ac${num}-${i}`, text, done: status === 'done' })),
       dor: (groomed ? { dor6: true, dor7: true } : {}) as Record<string, boolean>,
-      dod: status === 'done' ? Object.fromEntries(settings.dodItems.map((d) => [d.id, true])) : {},
       invest: st ? { I: true, N: true, V: true, E: true, S: (points ?? 99) <= 8, T: true } : {},
       blockedBy: num === 31 ? ['i20'] : num === 5 ? ['i15'] : num === 18 ? ['i43'] : num === 8 ? ['i47'] : [],
       bugSeverity: type === 'bug' ? (status === 'done' || num === 29 ? 'critical' : 'important') : undefined,
@@ -279,15 +278,6 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: 'dor5', text: 'Dependency đã xác định, không bị block' },
     { id: 'dor6', text: 'Có design/UX hoặc không cần' },
     { id: 'dor7', text: 'PO đã ưu tiên và giải thích "why"' },
-  ],
-  dodItems: [
-    { id: 'dod1', text: 'Code review đã approve' },
-    { id: 'dod2', text: 'Unit/automated test pass' },
-    { id: 'dod3', text: 'QA test + RETEST pass' },
-    { id: 'dod4', text: 'Đạt toàn bộ acceptance criteria' },
-    { id: 'dod5', text: 'Docs / help center đã cập nhật' },
-    { id: 'dod6', text: 'Deploy production, monitor ổn định' },
-    { id: 'dod7', text: 'PO accept tại sprint review' },
   ],
   activeMethod: 'sae-ice-caf',
   competitors: [

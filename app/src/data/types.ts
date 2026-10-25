@@ -93,7 +93,6 @@ export interface Issue {
   description: string;
   acceptanceCriteria: AcceptanceCriterion[];
   dor: Record<string, boolean>; // ChecklistItem.id -> checked
-  dod: Record<string, boolean>;
   invest: Record<string, boolean>; // I N V E S T
   blockedBy: string[]; // issue ids
   bugSeverity?: BugSeverity;
@@ -137,7 +136,6 @@ export interface Idea {
 export interface Settings {
   goals: StrategicGoal[];
   dorItems: ChecklistItem[];
-  dodItems: ChecklistItem[];
   activeMethod: string;
   competitors: Competitor[];
   cafWeights: { direct: number; indirect: number };

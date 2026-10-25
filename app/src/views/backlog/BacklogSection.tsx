@@ -12,7 +12,7 @@ export const SUBTABS: { id: string; name: string; icon: Icon; desc: string; seco
   { id: 'sprint', name: 'Sprint Planning', icon: IconRun, desc: 'Sprint goal, committed vs velocity — Start sprint đẩy item sang Bảng' },
   { id: 'ideas', name: 'Ideas', icon: IconBulb, desc: 'Danh sách ý tưởng trước khi vào backlog' },
   { id: 'insights', name: 'Insights', icon: IconChartBar, desc: 'Backlog health, DEEP, phân bổ (velocity/burndown ở Bảng)' },
-  { id: 'settings', name: 'Thiết lập', icon: IconSettings, desc: 'Strategic goals, DoR/DoD, method', secondary: true },
+  { id: 'settings', name: 'Thiết lập', icon: IconSettings, desc: 'Strategic goals, Definition of Ready, prioritization template', secondary: true },
 ];
 
 export function BacklogSection({ tab, go, views }: { tab: string; go(p: string): void; views: Record<string, ReactNode> }) {
