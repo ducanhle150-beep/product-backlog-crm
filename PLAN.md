@@ -34,6 +34,7 @@
   - Nút **Filter** chạy thật (giống CRM gốc): menu 4 nhóm Người được giao · Ưu tiên · Loại · Epic → danh sách con có nút ‹ quay lại, chọn nhiều; có "Chưa giao" / "Không thuộc epic nào", badge số filter, "Xoá tất cả filter". Áp dụng cho Danh sách, Ưu tiên và Bảng.
 - [x] **V1.3.5** (commit)
   - Bỏ hẳn **Definition of Done**: card trong Thiết lập, danh sách tiêu chí và dữ liệu DoD trên item/issue (luồng kéo sang DONE đã không dùng DoD từ V1.3).
+- [x] **V1.3.6** (commit) — Viết lại README: lý do cần phần này (5 vấn đề hiện tại), cách prototype giải quyết, workflow chính, **use case flow (Mermaid) của Product member** từ Idea → Item → Issue, tính năng, thuật ngữ, cách chạy, cấu trúc, lịch sử phiên bản.
 - [ ] **V1.4** (tiếp theo)
 - [ ] Chờ user: tên đối thủ Fraud thật, DoR/DoD của team, độ dài sprint, màu label Documentation
 
