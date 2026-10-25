@@ -1,9 +1,0 @@
-.rv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
-.rv-line { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); }
-.rv-list { max-height: 320px; overflow-y: auto; }
-.rv-metric { padding: 0 0 6px 46px; }
-.rv-q { padding: 6px 10px; margin-bottom: 6px; border-left: 3px solid var(--accent); background: var(--bg-card); border-radius: 4px; }
-.retro { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.retro__col { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--bg-raised); border: 1px solid var(--border-strong); border-top: 3px solid; border-radius: var(--radius-lg); }
-.retro__note { display: flex; gap: 6px; padding: 8px 10px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius); font-size: 12.5px; }
-.retro__note button { color: var(--text-3); display: inline-flex; align-self: flex-start; }

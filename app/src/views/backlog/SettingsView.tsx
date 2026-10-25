@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
+import { IconAdjustments, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
 import type { ChecklistItem, Settings } from '../../data/types';
 import { useStore } from '../../store/useStore';
-import { METHODS } from '../../lib/prioritization';
+import { METHODS, methodById } from '../../lib/prioritization';
 import { Button, Modal } from '../../components/ui/primitives';
 import './settings.css';
 
@@ -28,7 +28,7 @@ function ChecklistEditor({ items, onChange, autoIds = [] }: { items: ChecklistIt
       {items.map((it) => (
         <div key={it.id} className="row">
           <input className="input grow" value={it.text} onChange={(e) => onChange(items.map((x) => (x.id === it.id ? { ...x, text: e.target.value } : x)))} />
-          {autoIds.includes(it.id) && <span className="muted small" title="Tự kiểm tra từ dữ liệu issue">tự động</span>}
+          {autoIds.includes(it.id) && <span className="muted small" title="Tự kiểm tra từ dữ liệu item">tự động</span>}
           <button className="icon-btn" onClick={() => onChange(items.filter((x) => x.id !== it.id))}><IconTrash size={14} /></button>
         </div>
       ))}
@@ -40,12 +40,149 @@ function ChecklistEditor({ items, onChange, autoIds = [] }: { items: ChecklistIt
   );
 }
 
-function Num({ label, value, onChange, step = 1 }: { label: string; value: number; onChange(v: number): void; step?: number }) {
+function NumCell({ value, onChange, step = 1 }: { value: number; onChange(v: number): void; step?: number }) {
+  return <input className="input st-num" type="number" step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} />;
+}
+
+/** Cấu hình riêng của SAE ICE × CAF: đối thủ, trọng số, điểm adoption, ngưỡng phase (sheet Range). */
+function SaeConfig() {
+  const settings = useStore((s) => s.settings);
+  const up = useStore((s) => s.updateSettings);
+  const { cafWeights: w, adoptionScores: a, phaseThresholds: t } = settings;
   return (
-    <label className="field">
-      <span>{label}</span>
-      <input className="input" type="number" step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} style={{ width: 90 }} />
-    </label>
+    <div className="tpl-config">
+      <section>
+        <div className="section-title">Đối thủ</div>
+        <p className="muted small" style={{ marginTop: 0 }}>Tên đối thủ đang là placeholder — thay bằng đối thủ thật của Fraud.</p>
+        <table className="st-table">
+          <thead><tr><th>Tên</th><th style={{ width: 130 }}>Loại</th><th style={{ width: 36 }} /></tr></thead>
+          <tbody>
+            {settings.competitors.map((c) => (
+              <tr key={c.id}>
+                <td><input className="input st-full" value={c.name} onChange={(e) => up({ competitors: settings.competitors.map((x) => (x.id === c.id ? { ...x, name: e.target.value } : x)) })} /></td>
+                <td>
+                  <select className="select st-full" value={c.type} onChange={(e) => up({ competitors: settings.competitors.map((x) => (x.id === c.id ? { ...x, type: e.target.value as 'direct' | 'indirect' } : x)) })}>
+                    <option value="direct">Direct</option><option value="indirect">Indirect</option>
+                  </select>
+                </td>
+                <td><button className="icon-btn" onClick={() => up({ competitors: settings.competitors.filter((x) => x.id !== c.id) })}><IconTrash size={14} /></button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Button size="sm" variant="ghost" icon={<IconPlus size={14} />} onClick={() => up({ competitors: [...settings.competitors, { id: uid('c'), name: 'Đối thủ mới', type: 'direct' }] })}>Thêm đối thủ</Button>
+      </section>
+      <div className="tpl-two">
+        <section>
+          <div className="section-title">Trọng số loại đối thủ</div>
+          <table className="st-table">
+            <tbody>
+              <tr><td>Direct</td><td className="st-numcol"><NumCell step={0.1} value={w.direct} onChange={(v) => up({ cafWeights: { ...w, direct: v } })} /></td></tr>
+              <tr><td>Indirect</td><td className="st-numcol"><NumCell step={0.1} value={w.indirect} onChange={(v) => up({ cafWeights: { ...w, indirect: v } })} /></td></tr>
+            </tbody>
+          </table>
+        </section>
+        <section>
+          <div className="section-title">Điểm adoption</div>
+          <table className="st-table">
+            <tbody>
+              {([['no', 'No'], ['basic', 'Basic / Limited'], ['good', 'Good / Yes'], ['advanced', 'Advanced']] as const).map(([k, label]) => (
+                <tr key={k}><td>{label}</td><td className="st-numcol"><NumCell step={0.1} value={a[k]} onChange={(v) => up({ adoptionScores: { ...a, [k]: v } })} /></td></tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      </div>
+      <section>
+        <div className="section-title">Ngưỡng Implementation Phase (Final Score)</div>
+        <table className="st-table">
+          <tbody>
+            <tr><td>Phase 1 · High</td><td className="muted small">Điểm lớn hơn</td><td className="st-numcol"><NumCell value={t.p1} onChange={(v) => up({ phaseThresholds: { ...t, p1: v } })} /></td></tr>
+            <tr><td>Phase 2 · Medium</td><td className="muted small">Điểm từ</td><td className="st-numcol"><NumCell value={t.p2} onChange={(v) => up({ phaseThresholds: { ...t, p2: v } })} /></td></tr>
+            <tr><td>Phase 3 · Low</td><td className="muted small">Điểm từ</td><td className="st-numcol"><NumCell value={t.p3} onChange={(v) => up({ phaseThresholds: { ...t, p3: v } })} /></td></tr>
+            <tr><td>Phase 4 · Niche</td><td className="muted small">Dưới Phase 3</td><td className="st-numcol muted small">&lt; {t.p3}</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  );
+}
+
+/** Cấu hình riêng của MoSCoW: điểm từng nhãn khi vote, danh sách stakeholder vote. */
+function MoscowConfig() {
+  const settings = useStore((s) => s.settings);
+  const up = useStore((s) => s.updateSettings);
+  const pts = settings.moscowPoints;
+  return (
+    <div className="tpl-config tpl-two">
+      <section>
+        <div className="section-title">Điểm vote</div>
+        <table className="st-table">
+          <tbody>
+            {([['M', 'Must have'], ['S', 'Should have'], ['C', 'Could have'], ['W', "Won't have"]] as const).map(([k, label]) => (
+              <tr key={k}><td><strong>{k}</strong> · {label}</td><td className="st-numcol"><NumCell value={pts[k]} onChange={(v) => up({ moscowPoints: { ...pts, [k]: v } })} /></td></tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <div className="section-title">Stakeholders vote</div>
+        <table className="st-table">
+          <tbody>
+            {settings.stakeholders.map((s) => (
+              <tr key={s.id}>
+                <td><input className="input st-full" value={s.name} onChange={(e) => up({ stakeholders: settings.stakeholders.map((x) => (x.id === s.id ? { ...x, name: e.target.value } : x)) })} /></td>
+                <td style={{ width: 36 }}><button className="icon-btn" onClick={() => up({ stakeholders: settings.stakeholders.filter((x) => x.id !== s.id) })}><IconTrash size={14} /></button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Button size="sm" variant="ghost" icon={<IconPlus size={14} />} onClick={() => up({ stakeholders: [...settings.stakeholders, { id: uid('sh'), name: 'Stakeholder' }] })}>Thêm stakeholder</Button>
+      </section>
+    </div>
+  );
+}
+
+const TEMPLATE_CONFIG: Record<string, { summary(s: Settings): string; Editor(): ReactNode }> = {
+  'sae-ice-caf': {
+    summary: (s) => `${s.competitors.length} đối thủ · Direct ×${s.cafWeights.direct} / Indirect ×${s.cafWeights.indirect} · Phase ${s.phaseThresholds.p1} / ${s.phaseThresholds.p2} / ${s.phaseThresholds.p3}`,
+    Editor: SaeConfig,
+  },
+  moscow: {
+    summary: (s) => `M ${s.moscowPoints.M} · S ${s.moscowPoints.S} · C ${s.moscowPoints.C} · W ${s.moscowPoints.W} · ${s.stakeholders.length} stakeholder`,
+    Editor: MoscowConfig,
+  },
+};
+
+function TemplatePicker() {
+  const settings = useStore((s) => s.settings);
+  const up = useStore((s) => s.updateSettings);
+  const [open, setOpen] = useState(false);
+  const tpl = methodById(settings.activeMethod);
+  const config = TEMPLATE_CONFIG[tpl.id];
+  return (
+    <>
+      <label className="field">
+        <span>Template đang dùng</span>
+        <select className="select" value={settings.activeMethod} onChange={(e) => up({ activeMethod: e.target.value })}>
+          {METHODS.map((m) => <option key={m.id} value={m.id}>{m.name}{m.id === 'sae-ice-caf' ? ' (Team)' : ''}</option>)}
+        </select>
+      </label>
+      <div className="tpl-info">
+        <div className="muted small">{tpl.description}</div>
+        <div className="formula" style={{ margin: '8px 0' }}>{tpl.formula}</div>
+        <div className="muted small">Nguồn: {tpl.source}</div>
+      </div>
+      <div className="tpl-foot">
+        <span className="small grow">{config ? config.summary(settings) : <span className="muted">Template này không có cấu hình thêm.</span>}</span>
+        <Button size="sm" icon={<IconAdjustments size={14} />} disabled={!config} onClick={() => setOpen(true)}>Cấu hình template</Button>
+      </div>
+      {open && config && (
+        <Modal title={`Cấu hình template · ${tpl.name}`} width={640} onClose={() => setOpen(false)} footer={<Button variant="primary" onClick={() => setOpen(false)}>Xong</Button>}>
+          <config.Editor />
+        </Modal>
+      )}
+    </>
   );
 }
 
@@ -59,12 +196,8 @@ export function SettingsView() {
   return (
     <div className="view-scroll">
       <div className="st-grid">
-        <Card title="Vision & lý do backlog tồn tại" desc='"Tầm nhìn của sản phẩm là ___. Vì vậy, việc có tác động lớn nhất cho vision là ___." Mọi item trong backlog phải phục vụ câu này.'>
-          <label className="field"><span>Tầm nhìn sản phẩm</span><textarea className="textarea" rows={2} value={settings.vision} onChange={(e) => up({ vision: e.target.value })} /></label>
-          <label className="field" style={{ marginTop: 8 }}><span>Việc có tác động lớn nhất</span><textarea className="textarea" rows={2} value={settings.visionImpact} onChange={(e) => up({ visionImpact: e.target.value })} /></label>
-        </Card>
 
-        <Card title="Strategic goals" desc="Roadmap theme / OKR mà item gắn vào. Màu dùng để tô theo goal.">
+        <Card title="Strategic goals" desc="Mục tiêu chiến lược (roadmap theme / OKR) mà epic và item gắn vào — dùng để kiểm tra item không phục vụ goal nào trong Insights.">
           <div className="st-list">
             {settings.goals.map((g) => (
               <div key={g.id} className="row">
@@ -85,72 +218,17 @@ export function SettingsView() {
           <ChecklistEditor items={settings.dodItems} onChange={(dodItems) => up({ dodItems })} />
         </Card>
 
-        <Card title="Prioritization" desc="Method mặc định quyết định điểm hiển thị trong Danh sách, Buckets, Sprint Planning.">
-          <label className="field"><span>Method đang dùng</span>
-            <select className="select" value={settings.activeMethod} onChange={(e) => up({ activeMethod: e.target.value })}>
-              {METHODS.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-            </select>
-          </label>
-          <div className="section-title" style={{ marginTop: 14 }}>MoSCoW — điểm vote</div>
-          <div className="row">
-            {(['M', 'S', 'C', 'W'] as const).map((k) => <Num key={k} label={k} value={settings.moscowPoints[k]} onChange={(v) => up({ moscowPoints: { ...settings.moscowPoints, [k]: v } })} />)}
-          </div>
-          <div className="section-title" style={{ marginTop: 14 }}>Stakeholders (vote MoSCoW)</div>
-          <div className="st-list">
-            {settings.stakeholders.map((s) => (
-              <div key={s.id} className="row">
-                <input className="input grow" value={s.name} onChange={(e) => up({ stakeholders: settings.stakeholders.map((x) => (x.id === s.id ? { ...x, name: e.target.value } : x)) })} />
-                <button className="icon-btn" onClick={() => up({ stakeholders: settings.stakeholders.filter((x) => x.id !== s.id) })}><IconTrash size={14} /></button>
-              </div>
-            ))}
-            <Button size="sm" variant="ghost" icon={<IconPlus size={14} />} onClick={() => up({ stakeholders: [...settings.stakeholders, { id: uid('sh'), name: 'Stakeholder' }] })}>Thêm stakeholder</Button>
-          </div>
+        <Card title="Prioritization template" desc="Template quyết định điểm hiển thị trong Danh sách, Ưu tiên, Sprint Planning và panel chi tiết. Điểm đã chấm theo template khác vẫn được giữ khi đổi qua lại.">
+          <TemplatePicker />
         </Card>
 
-        <Card title="SAE ICE × CAF — đối thủ & bảng tra" desc="Theo sheet Range của file SAE - Backlog - MIDA Heatmap. Tên đối thủ đang là placeholder — thay bằng đối thủ thật của Fraud.">
-          <div className="st-list">
-            {settings.competitors.map((c) => (
-              <div key={c.id} className="row">
-                <input className="input grow" value={c.name} onChange={(e) => up({ competitors: settings.competitors.map((x) => (x.id === c.id ? { ...x, name: e.target.value } : x)) })} />
-                <select className="select" value={c.type} onChange={(e) => up({ competitors: settings.competitors.map((x) => (x.id === c.id ? { ...x, type: e.target.value as 'direct' | 'indirect' } : x)) })}>
-                  <option value="direct">Direct</option><option value="indirect">Indirect</option>
-                </select>
-                <button className="icon-btn" onClick={() => up({ competitors: settings.competitors.filter((x) => x.id !== c.id) })}><IconTrash size={14} /></button>
-              </div>
-            ))}
-            <Button size="sm" variant="ghost" icon={<IconPlus size={14} />} onClick={() => up({ competitors: [...settings.competitors, { id: uid('c'), name: 'Đối thủ mới', type: 'direct' }] })}>Thêm đối thủ</Button>
-          </div>
-          <div className="section-title" style={{ marginTop: 14 }}>Trọng số loại đối thủ</div>
-          <div className="row">
-            <Num label="Direct" step={0.1} value={settings.cafWeights.direct} onChange={(v) => up({ cafWeights: { ...settings.cafWeights, direct: v } })} />
-            <Num label="Indirect" step={0.1} value={settings.cafWeights.indirect} onChange={(v) => up({ cafWeights: { ...settings.cafWeights, indirect: v } })} />
-          </div>
-          <div className="section-title" style={{ marginTop: 14 }}>Điểm adoption</div>
-          <div className="row">
-            {(['no', 'basic', 'good', 'advanced'] as const).map((k) => <Num key={k} label={k[0].toUpperCase() + k.slice(1)} step={0.1} value={settings.adoptionScores[k]} onChange={(v) => up({ adoptionScores: { ...settings.adoptionScores, [k]: v } })} />)}
-          </div>
-          <div className="section-title" style={{ marginTop: 14 }}>Ngưỡng Implementation Phase</div>
-          <div className="row">
-            <Num label="Phase 1 >" value={settings.phaseThresholds.p1} onChange={(v) => up({ phaseThresholds: { ...settings.phaseThresholds, p1: v } })} />
-            <Num label="Phase 2 ≥" value={settings.phaseThresholds.p2} onChange={(v) => up({ phaseThresholds: { ...settings.phaseThresholds, p2: v } })} />
-            <Num label="Phase 3 ≥" value={settings.phaseThresholds.p3} onChange={(v) => up({ phaseThresholds: { ...settings.phaseThresholds, p3: v } })} />
-          </div>
-        </Card>
-
-        <Card title="Sprint & vệ sinh backlog">
-          <div className="row">
-            <Num label="Độ dài sprint (ngày)" value={settings.sprintLengthDays} onChange={(v) => up({ sprintLengthDays: v })} />
-            <Num label="Stale sau (tháng)" value={settings.staleMonths} onChange={(v) => up({ staleMonths: v })} />
-          </div>
-        </Card>
-
-        <Card title="Dữ liệu demo" desc="Dữ liệu lưu trong trình duyệt (localStorage). Reset để quay về 44 issue gốc + dữ liệu demo.">
+        <Card title="Dữ liệu demo" desc="Dữ liệu lưu trong trình duyệt (localStorage). Reset để quay về dữ liệu gốc (26 backlog item + 18 issue trên Bảng) + dữ liệu demo.">
           <Button variant="danger" icon={<IconRefresh size={14} />} onClick={() => setConfirmReset(true)}>Reset dữ liệu demo</Button>
         </Card>
       </div>
       {confirmReset && (
         <Modal title="Reset dữ liệu demo?" onClose={() => setConfirmReset(false)} footer={<><Button variant="ghost" onClick={() => setConfirmReset(false)}>Huỷ</Button><Button variant="danger" onClick={() => { reset(); setConfirmReset(false); }}>Reset</Button></>}>
-          Mọi thay đổi (điểm, sprint, grooming, ideas, thiết lập) sẽ mất và quay về dữ liệu ban đầu.
+          Mọi thay đổi (điểm, sprint, ideas, thiết lập) sẽ mất và quay về dữ liệu ban đầu.
         </Modal>
       )}
     </div>

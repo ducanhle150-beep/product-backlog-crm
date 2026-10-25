@@ -1,7 +1,7 @@
 // Seed: 44 issue thật của MIDA Fraud Feature (title/status/label/type/due lấy từ snapshot CRM 2026-10-24)
-// + DỮ LIỆU DEMO (điểm, story point, sprint, user story, grooming, ideas) để prototype có nội dung.
+// + DỮ LIỆU DEMO (điểm, story point, sprint, user story, ideas) để prototype có nội dung.
 import type {
-  Epic, GroomingSession, Idea, Issue, IssueType, Label, Member, Settings, Sprint, StatusId,
+  Epic, Idea, Issue, IssueType, Label, Member, Settings, Sprint, StatusId,
 } from './types';
 import type { Adoption } from '../lib/prioritization/saeIceCaf';
 
@@ -70,10 +70,10 @@ const ROWS: Row[] = [
   [23, 'Update: Banner suggest good bot', 'story', 'backlog', [], null, null, null, null, 'e-rules', null],
   [36, 'Update : Add thêm whitelist ,redirect vào Rule Execution Order', 'story', 'backlog', ['ideas'], 'huan', null, null, 5, 'e-rules', 's5'],
   [35, 'Update : Chuyển Auto tag thành Visitor Tag', 'story', 'backlog', ['ideas'], 'huan', null, null, 3, 'e-rules', null],
-  [34, 'Update : Fix lại Admin Access URL', 'improvement', 'backlog', ['ideas'], 'huan', null, null, 1, null, null],
+  [34, 'Update : Fix lại Admin Access URL', 'task', 'backlog', ['ideas'], 'huan', null, null, 1, null, null],
   [33, 'Update : Nâng cao disable dev tool', 'story', 'backlog', ['ideas'], 'huan', null, null, 5, null, null],
   [21, 'Update: Nhập tuổi trước khi vào store', 'story', 'backlog', ['ideas'], null, null, null, 3, null, null],
-  [22, 'Update : Khoá chức năng bật/tắt Record Order', 'improvement', 'backlog', [], 'anhv', 'erik', null, 2, 'e-rules', null],
+  [22, 'Update : Khoá chức năng bật/tắt Record Order', 'task', 'backlog', [], 'anhv', 'erik', null, 2, 'e-rules', null],
   [32, 'Update : Update lại onboarding của app.', 'story', 'backlog', ['ideas'], 'anhv', 'erik', null, 8, 'e-onboarding', null],
   [31, 'Update: Tự động hủy đơn hàng rủi ro cao (chỉ dành cho Plus)', 'story', 'backlog', [], null, 'erik', null, 13, 'e-rules', null],
   [20, 'Update: Tạo block rule đơn giản', 'story', 'backlog', ['ideas'], null, 'erik', null, 5, 'e-rules', 's5'],
@@ -82,7 +82,7 @@ const ROWS: Row[] = [
   [16, 'Update skill cho fraud', 'task', 'backlog', [], 'huan', null, null, 3, 'e-ai', null],
   [15, 'Update logic checkout rule', 'task', 'backlog', [], 'huan', null, null, 5, 'e-rules', null],
   [14, 'Quota card visitor logs trên Dashboard', 'task', 'todo', [], 'anhv', 'hai', '2026-10-26', 2, 'e-pricing', 's4'],
-  [13, 'Migrate sang web component', 'techdebt', 'doing', [], 'huan', 'hai', null, 5, null, 's4'],
+  [13, 'Migrate sang web component', 'task', 'doing', [], 'huan', 'hai', null, 5, null, 's4'],
   [11, 'Refined lại backlog của Product', 'task', 'backlog', ['docs', 'enh'], 'huan', null, null, 2, null, null],
   [10, 'Nghiên cứu onboarding riêng cho khách Plus', 'spike', 'backlog', [], 'huan', null, null, 3, 'e-onboarding', null],
   [9, 'Tổng hợp lại trigger hiện có và setup lại trigger cho khách', 'task', 'backlog', [], null, null, null, null, 'e-notify', null],
@@ -228,57 +228,43 @@ export function buildIssues(settings: Settings): Issue[] {
       successMetric: st?.metric ?? '',
       scores,
       scoreReasoning: '',
-      votes: [],
       lastGroomedAt: groomed ? isoDay('2026-10-15', '10:00') : undefined,
-      activity: [{ at: created, text: 'Tạo issue' }],
+      activity: [{ at: created, text: status === 'backlog' ? 'Tạo item' : 'Tạo issue' }],
     };
   });
 }
 
-const emptyRetro = () => ({ well: [], wrong: [], learned: [], improve: [], actions: [] });
-
 export const SPRINTS: Sprint[] = [
   {
     id: 's1', name: 'FRA Sprint 1', goal: 'Chốt hướng pricing plan và sửa bug blocking quan trọng.',
-    startDate: '2026-09-07', endDate: '2026-09-18', state: 'completed', capacity: {},
-    committedPoints: 32, completedPoints: 28, scopeChanges: [], reviewNotes: '', stakeholderFeedback: '', retro: emptyRetro(),
+    startDate: '2026-09-07', endDate: '2026-09-18', state: 'completed',
+    committedPoints: 32, completedPoints: 28, scopeChanges: []
   },
   {
     id: 's2', name: 'FRA Sprint 2', goal: 'Hoàn thiện tích hợp Mida-Fraud giai đoạn 1.',
-    startDate: '2026-09-21', endDate: '2026-10-02', state: 'completed', capacity: {},
-    committedPoints: 36, completedPoints: 33, scopeChanges: [], reviewNotes: '', stakeholderFeedback: '', retro: emptyRetro(),
+    startDate: '2026-09-21', endDate: '2026-10-02', state: 'completed',
+    committedPoints: 36, completedPoints: 33, scopeChanges: []
   },
   {
     id: 's3', name: 'FRA Sprint 3', goal: 'Ổn định production sau release pricing mới.',
-    startDate: '2026-10-05', endDate: '2026-10-16', state: 'completed', capacity: {},
+    startDate: '2026-10-05', endDate: '2026-10-16', state: 'completed',
     committedPoints: 40, completedPoints: 36, scopeChanges: [],
-    reviewNotes: 'Demo pricing mới cho CS; fix F5 Edit Block Page.', stakeholderFeedback: 'CS muốn có email cảnh báo quota.',
-    retro: {
-      well: ['Release pricing đúng hạn', 'Pair debugging bug production nhanh'],
-      wrong: ['Nhiều item kẹt ở REVIEWING', 'Item vào sprint khi chưa có AC'],
-      learned: ['Cần grooming trước planning ít nhất 2 ngày'],
-      improve: ['Áp dụng Definition of Ready trước khi kéo vào sprint'],
-      actions: [{ id: 'a1', text: 'Thêm checklist DoR vào backlog tool', done: true }, { id: 'a2', text: 'Giới hạn WIP REVIEWING ≤ 4', done: false }],
-    },
+   
   },
   {
     id: 's4', name: 'FRA Sprint 4', goal: 'Đưa email quota + notification + integrations lên production.',
     startDate: '2026-10-19', endDate: '2026-10-30', state: 'active',
-    capacity: { hai: 10, judith: 10, erik: 6, huong: 4, cuong: 3 },
     scopeChanges: [{ at: isoDay('2026-10-21'), issueId: 'i14', delta: 2 }],
-    reviewNotes: '', stakeholderFeedback: '', retro: emptyRetro(),
+   
   },
   {
     id: 's5', name: 'FRA Sprint 5', goal: 'Giúp merchant mới tạo rule chặn đầu tiên trong 5 phút và mở bán gói Annual.',
     startDate: '2026-11-02', endDate: '2026-11-13', state: 'planned',
-    capacity: { erik: 8, hai: 8, judith: 6 },
-    scopeChanges: [], reviewNotes: '', stakeholderFeedback: '', retro: emptyRetro(),
+    scopeChanges: []
   },
 ];
 
 export const DEFAULT_SETTINGS: Settings = {
-  vision: 'BSS Fraud Blocker giúp merchant Shopify chặn bot, IP/VPN xấu và đơn hàng gian lận trước khi gây thiệt hại.',
-  visionImpact: 'giúp merchant tự bảo vệ store trong 5 phút đầu sau khi cài và nâng cấp lên gói trả phí',
   goals: [
     { id: 'g1', name: 'Tăng chuyển đổi Free → Paid', color: '#22c55e' },
     { id: 'g2', name: 'Giảm churn merchant', color: '#f97316' },
@@ -317,32 +303,8 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: 'sh1', name: 'PM' }, { id: 'sh2', name: 'Tech Lead' }, { id: 'sh3', name: 'CS Lead' },
     { id: 'sh4', name: 'Marketing' }, { id: 'sh5', name: 'Sales/BD' },
   ],
-  staleMonths: 6,
-  sprintLengthDays: 12,
   lastBacklogReviewAt: isoDay('2026-10-15', '10:00'),
-  reviewChecklist: {},
 };
-
-export const GROOMING: GroomingSession[] = [
-  {
-    id: 'g-1', title: 'Grooming trước FRA Sprint 4', date: isoDay('2026-10-15', '03:00'), facilitatorId: ME,
-    attendeeIds: [ME, 'huan', 'hai', 'judith', 'erik', 'huong'], goal: 'Ready các item email quota, notification, integrations cho Sprint 4.',
-    agenda: ['i27', 'i30', 'i38', 'i17', 'i14'], prep: { p1: true, p2: true, p3: true, p4: true }, status: 'done',
-    targetMinutes: 60, perStoryMinutes: 8,
-    log: [
-      { at: isoDay('2026-10-15', '03:10'), issueId: 'i27', action: 'estimated', detail: 'Estimate 2 pt (votes 2,2,3,2)' },
-      { at: isoDay('2026-10-15', '03:20'), issueId: 'i17', action: 'split', detail: 'Tách Shopify Flow trigger sang item sau' },
-      { at: isoDay('2026-10-15', '03:35'), issueId: 'i38', action: 'ready', detail: 'Đạt DoR' },
-      { at: isoDay('2026-10-15', '03:50'), issueId: 'i14', action: 'reprioritized', detail: 'Đưa lên top theo yêu cầu CS' },
-    ],
-    notes: 'Kết luận: Sprint 4 tập trung notification. Shopify Flow để sprint sau.',
-  },
-  {
-    id: 'g-2', title: 'Grooming trước FRA Sprint 6', date: isoDay('2026-10-28', '03:00'), facilitatorId: ME,
-    attendeeIds: [ME, 'huan', 'hai', 'judith', 'erik'], goal: 'Ready nhóm item cho Sprint 6: dev tool, onboarding, fake order, MCP, auto-cancel Plus.',
-    agenda: ['i33', 'i32', 'i18', 'i24', 'i31', 'i5'], prep: {}, status: 'planned', targetMinutes: 60, perStoryMinutes: 8, log: [], notes: '',
-  },
-];
 
 export const IDEAS: Idea[] = [
   {
@@ -360,7 +322,7 @@ export const IDEAS: Idea[] = [
   },
   {
     id: 'id4', title: 'Dark mode cho Block page', description: 'Template block page tối màu.', source: 'trial', requester: 'Trial user',
-    requestCount: 1, quote: '', createdAt: isoDay('2026-04-02'), gate: {}, status: 'parking',
+    requestCount: 1, quote: '', createdAt: isoDay('2026-04-02'), gate: {}, status: 'inbox',
   },
   {
     id: 'id5', title: 'Chặn VPN theo từng quốc gia', description: 'Chỉ chặn VPN khi visitor đến từ danh sách quốc gia.', source: 'paying',

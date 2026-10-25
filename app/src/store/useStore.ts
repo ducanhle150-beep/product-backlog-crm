@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
-  Epic, GroomingLogEntry, GroomingSession, Idea, Issue, Settings, Sprint,
+  Epic, Idea, Issue, Settings, Sprint,
 } from '../data/types';
-import { DEFAULT_SETTINGS, EPICS, GROOMING, IDEAS, SPRINTS, buildIssues } from '../data/seed';
+import { DEFAULT_SETTINGS, EPICS, IDEAS, SPRINTS, buildIssues } from '../data/seed';
+import { DEFAULT_SPRINT_DAYS } from '../lib/metrics';
 
 const nowIso = () => new Date().toISOString();
 const uid = (p: string) => `${p}${Math.random().toString(36).slice(2, 9)}`;
@@ -13,7 +14,6 @@ interface Data {
   issues: Issue[];
   epics: Epic[];
   sprints: Sprint[];
-  sessions: GroomingSession[];
   ideas: Idea[];
   settings: Settings;
 }
@@ -24,7 +24,6 @@ const seed = (): Data => {
     issues: buildIssues(settings),
     epics: clone(EPICS),
     sprints: clone(SPRINTS),
-    sessions: clone(GROOMING),
     ideas: clone(IDEAS),
     settings,
   };
@@ -45,15 +44,13 @@ export interface Store extends Data {
 
   createSprint(patch?: Partial<Sprint>): Sprint;
   updateSprint(id: string, patch: Partial<Sprint>): void;
+  /** Xoá sprint planned; item trong sprint trả về Product Backlog. */
+  deleteSprint(id: string): void;
   moveToSprint(issueId: string, sprintId: string | undefined): void;
   /** Backlog item → task trên Bảng (cột PLANNED, vào sprint đang chạy nếu có). */
   pushToBoard(issueId: string): void;
   startSprint(id: string): void;
   completeSprint(id: string, carry: Record<string, 'next' | 'backlog'>): void;
-
-  createSession(patch?: Partial<GroomingSession>): GroomingSession;
-  updateSession(id: string, patch: Partial<GroomingSession>): void;
-  logSession(id: string, entry: Omit<GroomingLogEntry, 'at'>): void;
 
   createIdea(patch: Partial<Idea> & { title: string }): void;
   updateIdea(id: string, patch: Partial<Idea>): void;
@@ -101,7 +98,7 @@ export const useStore = create<Store>()(
           id: `i${num}`, key: `FRAUD_F-${num}`, num, kind: 'backlog', type: 'story', status: 'backlog', priority: 'medium',
           labelIds: [], createdAt: nowIso(), updatedAt: nowIso(), rank: maxRank + 1000, description: '',
           acceptanceCriteria: [], dor: {}, dod: {}, invest: {}, blockedBy: [], whyNow: '', successMetric: '',
-          scores: {}, scoreReasoning: '', votes: [], activity: [{ at: nowIso(), text: 'Tạo issue' }],
+          scores: {}, scoreReasoning: '', activity: [{ at: nowIso(), text: patch.kind === 'task' ? 'Tạo issue' : 'Tạo item' }],
           ...patch,
         };
         set({ issues: [...s.issues, issue] });
@@ -136,15 +133,21 @@ export const useStore = create<Store>()(
         const start = new Date(last ? last.endDate : nowIso());
         start.setDate(start.getDate() + 3);
         const end = new Date(start);
-        end.setDate(end.getDate() + s.settings.sprintLengthDays - 1);
+        end.setDate(end.getDate() + DEFAULT_SPRINT_DAYS - 1);
         const sprint: Sprint = {
           id: uid('s'), name: `FRA Sprint ${n}`, goal: '', startDate: start.toISOString().slice(0, 10),
-          endDate: end.toISOString().slice(0, 10), state: 'planned', capacity: {}, scopeChanges: [],
-          reviewNotes: '', stakeholderFeedback: '', retro: { well: [], wrong: [], learned: [], improve: [], actions: [] },
+          endDate: end.toISOString().slice(0, 10), state: 'planned', scopeChanges: [],
           ...patch,
         };
         set({ sprints: [...s.sprints, sprint] });
         return sprint;
+      },
+
+      deleteSprint: (id) => {
+        const sprint = get().sprints.find((sp) => sp.id === id);
+        if (!sprint || sprint.state !== 'planned') return;
+        get().issues.filter((i) => i.sprintId === id).forEach((i) => get().updateIssue(i.id, { sprintId: undefined }, `Xoá ${sprint.name} → về Product Backlog`));
+        set((s) => ({ sprints: s.sprints.filter((sp) => sp.id !== id) }));
       },
 
       updateSprint: (id, patch) => set((s) => ({ sprints: s.sprints.map((sp) => (sp.id === id ? { ...sp, ...patch } : sp)) })),
@@ -201,18 +204,6 @@ export const useStore = create<Store>()(
         }
       },
 
-      createSession: (patch) => {
-        const session: GroomingSession = {
-          id: uid('g-'), title: 'Grooming session', date: nowIso(), facilitatorId: 'me', attendeeIds: ['me'], goal: '',
-          agenda: [], prep: {}, status: 'planned', targetMinutes: 60, perStoryMinutes: 8, log: [], notes: '', ...patch,
-        };
-        set((s) => ({ sessions: [...s.sessions, session] }));
-        return session;
-      },
-      updateSession: (id, patch) => set((s) => ({ sessions: s.sessions.map((g) => (g.id === id ? { ...g, ...patch } : g)) })),
-      logSession: (id, entry) =>
-        set((s) => ({ sessions: s.sessions.map((g) => (g.id === id ? { ...g, log: [...g.log, { ...entry, at: nowIso() }] } : g)) })),
-
       createIdea: (patch) =>
         set((s) => ({
           ideas: [...s.ideas, { id: uid('id'), description: '', source: 'internal', requester: '', requestCount: 1, quote: '', createdAt: nowIso(), gate: {}, status: 'inbox', ...patch }],
@@ -237,10 +228,15 @@ export const useStore = create<Store>()(
     }),
     {
       name: 'crm-backlog-prototype',
-      version: 2,
-      // v2 tách backlog item / task → dữ liệu cũ không tương thích, nạp lại seed.
-      migrate: () => seed(),
-      partialize: ({ issues, epics, sprints, sessions, ideas, settings }) => ({ issues, epics, sprints, sessions, ideas, settings }),
+      version: 3,
+      migrate: (persisted, version) => {
+        // v1 chưa tách backlog item / task → không tương thích, nạp lại seed.
+        if (version < 2) return seed();
+        // v3 bỏ loại Tech debt / Improvement → chuyển thành Task.
+        const state = persisted as Data;
+        return { ...state, issues: state.issues.map((i) => (['techdebt', 'improvement'].includes(i.type as string) ? { ...i, type: 'task' } : i)) };
+      },
+      partialize: ({ issues, epics, sprints, ideas, settings }) => ({ issues, epics, sprints, ideas, settings }),
     },
   ),
 );

@@ -74,7 +74,7 @@ export function deep(ordered: Issue[], hasScore: (i: Issue) => boolean, now: Dat
   const parts = [
     { key: 'D', name: 'Detailed appropriately', value: detailed, hint: 'Top 25% backlog có user story + AC' },
     { key: 'E', name: 'Estimated', value: estimated, hint: 'Item đã có story point' },
-    { key: 'E2', name: 'Emergent', value: emergent, hint: 'Item được tạo/grooming trong 30 ngày qua' },
+    { key: 'E2', name: 'Emergent', value: emergent, hint: 'Item được tạo/refine trong 30 ngày qua' },
     { key: 'P', name: 'Prioritized', value: prioritized, hint: 'Item đã chấm điểm theo method đang dùng' },
   ];
   return { parts, overall: parts.reduce((s, p) => s + p.value, 0) / parts.length };

@@ -17,12 +17,6 @@ import { FieldInput } from '../../components/issue/ScoreEditor';
 import { PairwiseDialog } from './PairwiseDialog';
 import './prioritize.css';
 
-const ANTI_PATTERNS = [
-  { name: 'Highest Paid Person in the Room', text: 'Ý kiến người có chức cao nhất thắng, bất kể dữ liệu.' },
-  { name: 'Squeaky Wheel', text: 'Ai phàn nàn to nhất được ưu tiên.' },
-  { name: 'Hot Potato', text: 'Chủ đề "nóng" của tuần/ngày/giờ chen lên đầu.' },
-];
-
 function PhasePanel({ rows }: { rows: ScoredIssue[] }) {
   const settings = useStore((s) => s.settings);
   const { p1, p2, p3 } = settings.phaseThresholds;
@@ -205,9 +199,9 @@ export function PrioritizationView() {
   return (
     <div className="view-scroll prio">
       <div className="method-current">
-        <span className="muted small">Method đang dùng</span>
+        <span className="muted small">Template đang dùng</span>
         <span className="method-tab is-active">{method.short}{method.id === 'sae-ice-caf' && <span className="method-tab__tag">Team</span>}</span>
-        <button className="link-btn small" onClick={() => { window.location.hash = '/backlog/settings'; }}>Đổi method trong Thiết lập →</button>
+        <button className="link-btn small" onClick={() => { window.location.hash = '/backlog/settings'; }}>Đổi template trong Thiết lập →</button>
       </div>
 
       <div className="prio-top">
@@ -312,13 +306,6 @@ export function PrioritizationView() {
         </table>
       </div>
 
-      <div className="card" style={{ marginTop: 16 }}>
-        <div className="card__head"><IconAlertTriangle size={16} color="#f59e0b" /> Tránh anti-pattern khi ưu tiên</div>
-        <div className="card__body anti">
-          {ANTI_PATTERNS.map((a) => <div key={a.name}><strong>{a.name}</strong><div className="muted small">{a.text}</div></div>)}
-          <div><strong>Đừng quên technical item</strong><div className="muted small">PO phải ưu tiên cả technical story, spike, tech debt cùng feature.</div></div>
-        </div>
-      </div>
 
       {confirm && (
         <Modal title={`Áp dụng thứ tự ${method.name}`} onClose={() => setConfirm(false)} footer={<><Button variant="ghost" onClick={() => setConfirm(false)}>Huỷ</Button><Button variant="primary" onClick={apply}>Áp dụng</Button></>}>

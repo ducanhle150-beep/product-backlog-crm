@@ -10,8 +10,8 @@ import './shell.css';
 interface Item { name: string; icon: Icon; color: string; suffix?: string; route?: string; chevron?: boolean }
 
 const WORK_ITEMS: Item[] = [
-  { name: 'Product Backlog', icon: IconListDetails, color: '#3b82f6', route: 'backlog/list' },
   { name: 'Bảng', icon: IconLayoutKanban, color: '#f0543c', route: 'board' },
+  { name: 'Product Backlog', icon: IconListDetails, color: '#3b82f6', route: 'backlog/list' },
   { name: 'Hôm nay', icon: IconLayoutGrid, color: '#3b82f6' },
   { name: 'Dự án', suffix: 'Dự án', icon: IconListTree, color: '#3b82f6' },
   { name: 'Sprint', suffix: 'Sprint', icon: IconRun, color: '#c9a26b', route: 'backlog/sprint' },

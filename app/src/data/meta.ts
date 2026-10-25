@@ -19,8 +19,6 @@ export const TYPES: Record<IssueType, { name: string; color: string }> = {
   task: { name: 'Task', color: '#3b82f6' },
   bug: { name: 'Bug', color: '#e5484d' },
   spike: { name: 'Spike', color: '#f59e0b' },
-  techdebt: { name: 'Tech debt', color: '#8a8a8a' },
-  improvement: { name: 'Improvement', color: '#05a2c2' },
 };
 
 export const PRIORITIES: Record<Priority, { name: string; color: string }> = {

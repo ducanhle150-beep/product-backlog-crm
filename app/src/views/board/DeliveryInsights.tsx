@@ -30,8 +30,8 @@ export function DeliveryInsights({ go }: { go(path: string): void }) {
 
   const signals: { level: Level; text: string }[] = [];
   if (active && committed > velocity * 1.15) signals.push({ level: 'bad', text: `${active.name} commit ${committed} pt, vượt velocity TB ${velocity} pt — rủi ro carry-over lớn.` });
-  if (reviewing > 4) signals.push({ level: 'warn', text: `${reviewing} task kẹt ở REVIEWING — cân nhắc giới hạn WIP (action item retro Sprint 3).` });
-  if (overdue.length) signals.push({ level: 'warn', text: `${overdue.length} task quá hạn: ${overdue.map((i) => i.key).join(', ')}.` });
+  if (reviewing > 4) signals.push({ level: 'warn', text: `${reviewing} issue kẹt ở REVIEWING — cân nhắc giới hạn WIP.` });
+  if (overdue.length) signals.push({ level: 'warn', text: `${overdue.length} issue quá hạn: ${overdue.map((i) => i.key).join(', ')}.` });
   if (active && daysLeft > 0 && remaining / daysLeft > velocity / 10 * 1.5) signals.push({ level: 'warn', text: `Còn ${remaining} pt trong ${daysLeft} ngày — cần ~${Math.ceil(remaining / daysLeft)} pt/ngày, nhanh hơn nhịp thường (~${Math.round(velocity / 10)} pt/ngày).` });
   if (added) signals.push({ level: 'warn', text: `Scope tăng +${added} pt sau khi sprint bắt đầu.` });
   if (!signals.length) signals.push({ level: 'good', text: 'Sprint đang đúng nhịp.' });
@@ -58,11 +58,11 @@ export function DeliveryInsights({ go }: { go(path: string): void }) {
         <div className="card kpi"><div className="muted small">Còn lại</div><strong>{daysLeft} ngày</strong><span className="muted small">{remaining} pt chưa xong</span></div>
         <div className="card kpi"><div className="muted small">Velocity TB (3 sprint)</div><strong>{velocity} pt</strong><span className="small" style={{ color: committed > velocity * 1.15 ? LEVEL_COLOR.bad : 'var(--text-3)' }}>Sprint này commit {committed} pt</span></div>
         <div className="card kpi"><div className="muted small">Scope change</div><strong>+{added} pt</strong><span className="muted small">thêm sau khi start</span></div>
-        <div className="card kpi"><div className="muted small">Task quá hạn</div><strong>{overdue.length}</strong><span className="muted small">trên {items.length} task</span></div>
+        <div className="card kpi"><div className="muted small">Issue quá hạn</div><strong>{overdue.length}</strong><span className="muted small">trên {items.length} issue</span></div>
       </div>
       <div className="ins-grid">
         <div className="card">
-          <div className="card__head">Burndown <span className="muted small">— ideal vs còn lại; Scope tăng khi thêm item sau start</span></div>
+          <div className="card__head">Burndown <span className="muted small">— ideal vs còn lại; Scope tăng khi thêm issue sau start</span></div>
           <div className="card__body"><BurndownChart sprint={active} issues={items} /></div>
         </div>
         <div className="card">
@@ -70,7 +70,7 @@ export function DeliveryInsights({ go }: { go(path: string): void }) {
           <div className="card__body"><VelocityChart sprints={sprints} issues={issues} /></div>
         </div>
         <div className="card">
-          <div className="card__head">Task theo trạng thái</div>
+          <div className="card__head">Issue theo trạng thái</div>
           <div className="card__body">
             <BarList rows={BOARD_STATUSES.map((s) => ({ label: s.name, value: items.filter((i) => i.status === s.id).length, color: s.color }))} />
             <div className="row small muted" style={{ gap: 12, marginTop: 10, flexWrap: 'wrap' }}>

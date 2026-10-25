@@ -65,8 +65,6 @@ export function TypeIcon({ type, size = 14 }: { type: IssueType; size?: number }
       {type === 'story' && <path d="M4.5 3.5h5v7l-2.5-1.8-2.5 1.8z" fill="#fff" />}
       {type === 'epic' && <path d="M7.8 2.8 4.5 7.6h2.4l-.7 3.6 3.3-4.8H7.1z" fill="#fff" />}
       {type === 'spike' && <path d="M7 3.2v4.6M7 9.6v.9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />}
-      {type === 'techdebt' && <path d="M4 5h6M4 7h6M4 9h4" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" />}
-      {type === 'improvement' && <polyline points="4,8.5 7,5 10,8.5" fill="none" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />}
     </svg>
   );
 }

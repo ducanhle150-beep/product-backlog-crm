@@ -3,7 +3,7 @@
 export type StatusId = 'backlog' | 'planned' | 'todo' | 'doing' | 'reviewing' | 'retest' | 'done';
 /** backlog = item trong Product Backlog (có cấu hình PM); task = đã đẩy sang Bảng để thực thi. */
 export type IssueKind = 'backlog' | 'task';
-export type IssueType = 'epic' | 'story' | 'task' | 'bug' | 'spike' | 'techdebt' | 'improvement';
+export type IssueType = 'epic' | 'story' | 'task' | 'bug' | 'spike';
 export type Priority = 'urgent' | 'high' | 'medium' | 'low';
 export type BugSeverity = 'critical' | 'important' | 'minor';
 export type TShirt = 'S' | 'M' | 'L' | 'XL';
@@ -59,12 +59,6 @@ export interface AcceptanceCriterion {
   done: boolean;
 }
 
-export interface EstimateVote {
-  memberId: string;
-  points: number;
-  reason: string;
-}
-
 export interface ActivityEntry {
   at: string; // ISO
   text: string;
@@ -108,18 +102,9 @@ export interface Issue {
   successMetric: string;
   scores: ScoreMap;
   scoreReasoning: string;
-  votes: EstimateVote[];
   lastGroomedAt?: string;
   archived?: boolean;
   activity: ActivityEntry[];
-}
-
-export interface RetroBoard {
-  well: string[];
-  wrong: string[];
-  learned: string[];
-  improve: string[];
-  actions: { id: string; text: string; done: boolean }[];
 }
 
 export interface Sprint {
@@ -129,37 +114,10 @@ export interface Sprint {
   startDate: string;
   endDate: string;
   state: 'planned' | 'active' | 'completed';
-  capacity: Record<string, number>; // memberId -> points
   /** Snapshot lịch sử cho sprint đã xong (issue cũ không có trong dataset). */
   committedPoints?: number;
   completedPoints?: number;
   scopeChanges: { at: string; issueId: string; delta: number }[];
-  reviewNotes: string;
-  stakeholderFeedback: string;
-  retro: RetroBoard;
-}
-
-export interface GroomingLogEntry {
-  at: string;
-  issueId?: string;
-  action: 'added' | 'removed' | 'split' | 'estimated' | 'reprioritized' | 'ready' | 'rewritten' | 'note';
-  detail: string;
-}
-
-export interface GroomingSession {
-  id: string;
-  title: string;
-  date: string; // ISO datetime
-  facilitatorId: string;
-  attendeeIds: string[];
-  goal: string;
-  agenda: string[]; // issue ids
-  prep: Record<string, boolean>;
-  status: 'planned' | 'running' | 'done';
-  targetMinutes: number;
-  perStoryMinutes: number;
-  log: GroomingLogEntry[];
-  notes: string;
 }
 
 export interface Idea {
@@ -177,8 +135,6 @@ export interface Idea {
 }
 
 export interface Settings {
-  vision: string;
-  visionImpact: string;
   goals: StrategicGoal[];
   dorItems: ChecklistItem[];
   dodItems: ChecklistItem[];
@@ -189,8 +145,5 @@ export interface Settings {
   phaseThresholds: { p1: number; p2: number; p3: number }; // >p1, p2..p1, p3..p2, <p3
   moscowPoints: { M: number; S: number; C: number; W: number };
   stakeholders: { id: string; name: string }[];
-  staleMonths: number;
-  sprintLengthDays: number;
   lastBacklogReviewAt?: string;
-  reviewChecklist: Record<string, boolean>;
 }

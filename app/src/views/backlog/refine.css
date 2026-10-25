@@ -1,0 +1,15 @@
+.refine { flex: 1; min-height: 0; display: flex; }
+.refine__queue { width: 290px; flex-shrink: 0; padding: 14px; border-right: 1px solid var(--border); overflow-y: auto; }
+.refine__qitem { width: 100%; display: flex; align-items: center; gap: 6px; padding: 5px 6px; text-align: left; border-radius: 4px; }
+.refine__qitem:hover { background: var(--bg-hover); }
+.refine__qitem.is-active { background: var(--bg-active); }
+.refine__main { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 40px; }
+.refine__card { padding: 16px; background: var(--bg-raised); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); }
+.refine__title { width: 100%; margin: 10px 0 14px; background: none; border: 0; outline: none; font-size: 17px; font-weight: 600; }
+.refine__ac { display: flex; align-items: center; gap: 6px; color: var(--text-2); font-size: 12.5px; }
+.refine__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 16px; }
+.refine__points { display: flex; gap: 4px; }
+.refine__pt { width: 34px; height: 34px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--bg-card); font-weight: 600; }
+.refine__pt:hover { border-color: var(--accent); }
+.refine__pt.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.refine__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }

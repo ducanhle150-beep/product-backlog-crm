@@ -8,7 +8,7 @@ import { PRIORITIES, SEVERITY, SOURCES, TYPES } from '../../data/meta';
 import { useStore } from '../../store/useStore';
 import { useScoring } from '../../store/hooks';
 import { methodById } from '../../lib/prioritization';
-import { investChecks, unresolvedBlockers } from '../../lib/readiness';
+import { unresolvedBlockers } from '../../lib/readiness';
 import type { CheckResult } from '../../lib/readiness';
 import { StatusIcon, TypeIcon } from '../ui/icons';
 import { Button, Progress } from '../ui/primitives';
@@ -39,7 +39,7 @@ function Checklist({ items, onToggle }: { items: CheckResult[]; onToggle(id: str
   return (
     <div>
       {items.map((c) => (
-        <label key={c.id} className={`check ${c.auto ? 'check--auto' : ''}`} title={c.auto ? 'Tự động suy ra từ dữ liệu issue' : undefined}>
+        <label key={c.id} className={`check ${c.auto ? 'check--auto' : ''}`} title={c.auto ? 'Tự động suy ra từ dữ liệu item' : undefined}>
           <input type="checkbox" checked={c.ok} disabled={c.auto} onChange={(e) => onToggle(c.id, e.target.checked)} />
           <span className="grow">{c.text}</span>
           {c.auto && <span className="muted small">tự động</span>}
@@ -56,7 +56,6 @@ function DrawerBody({ issue }: { issue: Issue }) {
   const [newAc, setNewAc] = useState('');
   const up = (patch: Partial<Issue>, activity?: string) => updateIssue(issue.id, patch, activity);
   const r = ready(issue);
-  const invest = investChecks(issue, byId);
   const blockers = unresolvedBlockers(issue, byId);
   const blocks = issues.filter((i) => i.blockedBy.includes(issue.id));
   const story = issue.userStory ?? { asA: '', iWant: '', soThat: '' };
@@ -214,25 +213,9 @@ function DrawerBody({ issue }: { issue: Issue }) {
         <Checklist items={r.checks} onToggle={(id, v) => up({ dor: { ...issue.dor, [id]: v } })} />
       </Section>
 
-      <Section title={`INVEST · ${invest.filter((c) => c.ok).length}/6`}>
-        <Checklist items={invest} onToggle={(id, v) => up({ invest: { ...issue.invest, [id]: v } })} />
-      </Section>
-
-      <Section title={`Definition of Done · ${settings.dodItems.filter((d) => issue.dod[d.id]).length}/${settings.dodItems.length}`}>
-        <Checklist items={settings.dodItems.map((d) => ({ id: d.id, text: d.text, ok: !!issue.dod[d.id], auto: false }))} onToggle={(id, v) => up({ dod: { ...issue.dod, [id]: v } })} />
-      </Section>
-
-      <Section title={`Ưu tiên · ${methodById(settings.activeMethod).name}`} right={<span className="muted small">Đổi method trong Thiết lập</span>}>
+      <Section title={`Ưu tiên · ${methodById(settings.activeMethod).name}`} right={<span className="muted small">Đổi template trong Thiết lập</span>}>
         <ScoreEditor issue={issue} method={methodById(settings.activeMethod)} />
       </Section>
-
-      {issue.votes.length > 0 && (
-        <Section title="Planning poker">
-          {issue.votes.map((v) => (
-            <div key={v.memberId} className="row small"><strong style={{ width: 24 }}>{v.points}</strong><span className="muted" style={{ width: 140 }}>{MEMBERS.find((m) => m.id === v.memberId)?.name}</span><span className="grow">{v.reason}</span></div>
-          ))}
-        </Section>
-      )}
 
       <Section title="Activity">
         {[...issue.activity].reverse().slice(0, 12).map((a, i) => (
@@ -248,7 +231,7 @@ function DrawerBody({ issue }: { issue: Issue }) {
           variant="primary"
           size="sm"
           icon={<IconArrowRight size={14} />}
-          title={r.ready ? 'Chuyển thành task trên Bảng (cột PLANNED)' : 'Chưa đạt Definition of Ready'}
+          title={r.ready ? 'Chuyển thành issue trên Bảng (cột PLANNED)' : 'Chưa đạt Definition of Ready'}
           onClick={() => { store.pushToBoard(issue.id); store.openIssue(null); }}
         >
           Đẩy sang Bảng{!r.ready ? ' (chưa Ready)' : ''}

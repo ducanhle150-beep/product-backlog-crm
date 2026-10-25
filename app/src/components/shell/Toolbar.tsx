@@ -1,9 +1,10 @@
-import { IconAdjustmentsHorizontal, IconArrowsSort, IconBell, IconChevronDown, IconDotsVertical, IconFilter, IconLayoutSidebar, IconPlus, IconSearch } from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal, IconArrowsSort, IconBell, IconChevronDown, IconDotsVertical, IconLayoutSidebar, IconPlus, IconSearch } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { MEMBERS } from '../../data/seed';
 import { useStore } from '../../store/useStore';
 import { useUi } from '../../store/ui';
 import { AvatarStack, Button } from '../ui/primitives';
+import { FilterMenu } from './FilterMenu';
 
 export function PageHeader({ title, icon }: { title: string; icon: ReactNode }) {
   return (
@@ -14,9 +15,10 @@ export function PageHeader({ title, icon }: { title: string; icon: ReactNode }) 
   );
 }
 
-export function ProjectToolbar({ go, tabs, onNewIssue }: { go(path: string): void; tabs?: ReactNode; onNewIssue(): void }) {
+/** noun: 'item' ở Product Backlog, 'issue' ở Bảng. */
+export function ProjectToolbar({ go, tabs, noun, onNewIssue }: { go(path: string): void; tabs?: ReactNode; noun: 'item' | 'issue'; onNewIssue(): void }) {
   const { query, setQuery } = useUi();
-  const inboxCount = useStore((s) => s.ideas.filter((i) => i.status === 'inbox').length);
+  const inboxCount = useStore((s) => s.ideas.filter((i) => i.status === 'inbox' || i.status === 'parking').length);
   return (
     <div className="project-toolbar">
       <button className="project-switch">
@@ -27,14 +29,14 @@ export function ProjectToolbar({ go, tabs, onNewIssue }: { go(path: string): voi
       {tabs}
       <label className="search">
         <IconSearch size={15} className="muted" />
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm issue theo mã hoặc tiêu đề..." />
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={`Tìm ${noun} theo mã hoặc tiêu đề...`} />
       </label>
       <div className="grow" />
-      <button className="icon-btn bell" onClick={() => go('backlog/ideas')} title="Ideas inbox">
+      <button className="icon-btn bell" onClick={() => go('backlog/ideas')} title="Ideas">
         <IconBell size={17} stroke={1.6} />
         {inboxCount > 0 && <span className="bell__count">{inboxCount}</span>}
       </button>
-      <Button variant="primary" icon={<IconPlus size={15} />} onClick={onNewIssue}>New issue</Button>
+      <Button variant="primary" icon={<IconPlus size={15} />} onClick={onNewIssue}>New {noun}</Button>
     </div>
   );
 }
@@ -46,7 +48,7 @@ export function FilterBar({ right }: { right?: ReactNode }) {
   return (
     <div className="filter-bar">
       <button className="icon-btn"><IconLayoutSidebar size={16} stroke={1.6} /></button>
-      <button className="filter-btn"><IconFilter size={15} stroke={1.6} /> Filter</button>
+      <FilterMenu />
       <button className={`pill ${onlyMine ? 'is-on' : ''}`} onClick={toggleMine}>Only mine</button>
       <AvatarStack ids={FRAUD_MEMBERS} />
       <div className="grow" />

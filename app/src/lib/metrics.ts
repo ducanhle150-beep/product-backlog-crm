@@ -57,6 +57,11 @@ export function burndown(sprint: Sprint, issues: Issue[], today: Date) {
   return { rows, initialScope };
 }
 
+/** Item không được động tới quá số tháng này bị coi là stale. */
+export const STALE_MONTHS = 6;
+/** Độ dài mặc định khi tạo sprint mới (sửa lại ngày trong Sprint Planning). */
+export const DEFAULT_SPRINT_DAYS = 12;
+
 export function isStale(issue: Issue, months: number, now: Date) {
   const last = new Date(issue.lastGroomedAt ?? issue.updatedAt);
   return now.getTime() - last.getTime() > months * 30 * 86400000;

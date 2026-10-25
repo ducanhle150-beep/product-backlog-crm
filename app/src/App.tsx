@@ -7,10 +7,8 @@ import { KanbanBoard } from './views/board/KanbanBoard';
 import { DeliveryInsights } from './views/board/DeliveryInsights';
 import { BacklogSection } from './views/backlog/BacklogSection';
 import { PrioritizationView } from './views/backlog/PrioritizationView';
-import { GroomingView } from './views/backlog/GroomingView';
 import { SprintPlanningView } from './views/backlog/SprintPlanningView';
 import { InsightsView } from './views/backlog/InsightsView';
-import { ReviewView } from './views/backlog/ReviewView';
 import { IdeasView } from './views/backlog/IdeasView';
 import { SettingsView } from './views/backlog/SettingsView';
 import { useStore } from './store/useStore';
@@ -18,10 +16,8 @@ import { useHashRoute } from './store/ui';
 
 const VIEWS: Record<string, ReactNode> = {
   prioritize: <PrioritizationView />,
-  grooming: <GroomingView />,
   sprint: <SprintPlanningView />,
   insights: <InsightsView />,
-  review: <ReviewView />,
   ideas: <IdeasView />,
   settings: <SettingsView />,
 };
@@ -45,6 +41,7 @@ export default function App() {
         )}
         <ProjectToolbar
           go={go}
+          noun={page === 'board' ? 'issue' : 'item'}
           tabs={
             page === 'board' ? (
               <div className="seg">
@@ -54,8 +51,8 @@ export default function App() {
             ) : undefined
           }
           onNewIssue={() => {
-            if (page === 'board') createIssue({ title: 'Task mới', kind: 'task', status: 'planned', sprintId: activeSprintId });
-            else openIssue(createIssue({ title: 'Backlog item mới' }).id);
+            if (page === 'board') createIssue({ title: 'Issue mới', kind: 'task', status: 'planned', sprintId: activeSprintId });
+            else openIssue(createIssue({ title: 'Item mới' }).id);
           }}
         />
         {page === 'board' && boardTab === 'kanban' && <KanbanBoard go={go} />}

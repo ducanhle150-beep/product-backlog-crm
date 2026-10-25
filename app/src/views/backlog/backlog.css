@@ -15,10 +15,6 @@
 .link-btn { color: var(--accent-text); }
 .link-btn:hover { text-decoration: underline; }
 .list-scroll { flex: 1; overflow: auto; padding-bottom: 40px; }
-.active-sprint-link { display: flex; align-items: center; gap: 8px; width: 100%; height: 44px; padding: 0 40px; color: var(--text-2); border-bottom: 1px solid var(--border); background: #191c24; }
-.active-sprint-link:hover { color: var(--text); }
-.create-sprint { display: flex; align-items: center; gap: 8px; width: 100%; height: 52px; padding: 0 40px; color: var(--text-3); border-bottom: 1px solid var(--border); }
-.create-sprint:hover { color: var(--text); background: #1a1a1a; }
 
 .bgroup.is-over { background: #1a1d26; }
 .bgroup__head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px 0 18px; background: var(--bg); border-bottom: 1px solid var(--border); cursor: pointer; }
@@ -45,13 +41,6 @@
 .score-badge--empty { border-color: #333; color: var(--text-4); }
 .score-badge__dot { width: 6px; height: 6px; border-radius: 50%; }
 
-.buckets { flex: 1; display: grid; grid-template-columns: repeat(4, minmax(240px, 1fr)); gap: 12px; padding: 14px 16px; overflow: auto; align-items: start; }
-.bucket { background: var(--bg-raised); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-.bucket header { display: flex; gap: 10px; padding: 2px 2px 6px; }
-.bucket__bar { width: 4px; border-radius: 2px; }
-.mini-card { text-align: left; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius); padding: 8px 10px; }
-.mini-card:hover { border-color: #3a3a3a; }
-.mini-card__title { margin-top: 4px; font-size: 13px; }
 
 .storymap { flex: 1; display: flex; min-height: 0; }
 .storymap__grid { flex: 1; display: grid; gap: 8px; padding: 14px 16px; overflow: auto; align-content: start; }
@@ -62,3 +51,7 @@
 .map-card { text-align: left; display: flex; flex-direction: column; gap: 3px; padding: 7px 8px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius); }
 .map-card:hover { border-color: #3a3a3a; }
 .map-card__title { font-size: 12.5px; line-height: 1.35; }
+.hf-banner { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #2e2410; color: #fbbf24; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+.hf-banner strong { color: #fde68a; }
+.epic-chip { background: transparent; max-width: 220px; }
+.epic-chip__name { overflow: hidden; text-overflow: ellipsis; color: #d4d4d4; }

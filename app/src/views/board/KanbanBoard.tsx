@@ -9,7 +9,7 @@ import { BOARD_STATUSES } from '../../data/meta';
 import { useStore } from '../../store/useStore';
 import { useIssueFilter } from '../../store/ui';
 import { PriorityIcon, StatusIcon, TypeIcon } from '../../components/ui/icons';
-import { Avatar, Button, DateChip, LabelChip, Modal, memberById } from '../../components/ui/primitives';
+import { Avatar, DateChip, LabelChip, memberById } from '../../components/ui/primitives';
 import { BoardFilterRight, FilterBar } from '../../components/shell/Toolbar';
 import './board.css';
 
@@ -65,7 +65,7 @@ function Column({ status, issues }: { status: (typeof BOARD_STATUSES)[number]; i
           <button className="kcol__more" onClick={() => setExpanded(true)}>Còn {issues.length - COLUMN_LIMIT} issue</button>
         )}
       </div>
-      <button className="kcol__new" onClick={() => createIssue({ title: 'Task mới', kind: 'task', status: status.id, sprintId: activeSprintId })}>
+      <button className="kcol__new" onClick={() => createIssue({ title: 'Issue mới', kind: 'task', status: status.id, sprintId: activeSprintId })}>
         <IconPlus size={15} /> New issue
       </button>
     </section>
@@ -75,12 +75,9 @@ function Column({ status, issues }: { status: (typeof BOARD_STATUSES)[number]; i
 export function KanbanBoard({ go }: { go(path: string): void }) {
   const issues = useStore((s) => s.issues);
   const sprints = useStore((s) => s.sprints);
-  const settings = useStore((s) => s.settings);
   const updateIssue = useStore((s) => s.updateIssue);
   const filter = useIssueFilter();
   const [sprintOnly, setSprintOnly] = useState(false);
-  const [pendingDone, setPendingDone] = useState<Issue | null>(null);
-  const [dodDraft, setDodDraft] = useState<Record<string, boolean>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const active = sprints.find((s) => s.state === 'active');
@@ -94,11 +91,6 @@ export function KanbanBoard({ go }: { go(path: string): void }) {
     const to = e.over?.id as StatusId | undefined;
     const issue = issues.find((i) => i.id === e.active.id);
     if (!to || !issue || issue.status === to) return;
-    if (to === 'done' && settings.dodItems.some((d) => !issue.dod[d.id])) {
-      setDodDraft({ ...issue.dod });
-      setPendingDone(issue);
-      return;
-    }
     updateIssue(issue.id, { status: to }, `Chuyển trạng thái → ${BOARD_STATUSES.find((s) => s.id === to)!.name}`);
   };
 
@@ -134,35 +126,6 @@ export function KanbanBoard({ go }: { go(path: string): void }) {
         </div>
       </DndContext>
 
-      {pendingDone && (
-        <Modal
-          title={`Definition of Done — ${pendingDone.key}`}
-          onClose={() => setPendingDone(null)}
-          footer={
-            <>
-              <Button variant="ghost" onClick={() => setPendingDone(null)}>Huỷ</Button>
-              <Button
-                variant="primary"
-                disabled={settings.dodItems.some((d) => !dodDraft[d.id])}
-                onClick={() => {
-                  updateIssue(pendingDone.id, { status: 'done', dod: dodDraft }, 'Đạt Definition of Done → DONE');
-                  setPendingDone(null);
-                }}
-              >
-                Chuyển sang DONE
-              </Button>
-            </>
-          }
-        >
-          <p className="muted" style={{ marginTop: 0 }}>Item chỉ được chuyển sang DONE khi đạt toàn bộ Definition of Done của team.</p>
-          {settings.dodItems.map((d) => (
-            <label key={d.id} className="check">
-              <input type="checkbox" checked={!!dodDraft[d.id]} onChange={(e) => setDodDraft({ ...dodDraft, [d.id]: e.target.checked })} />
-              {d.text}
-            </label>
-          ))}
-        </Modal>
-      )}
     </>
   );
 }

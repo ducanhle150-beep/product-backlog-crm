@@ -10,3 +10,10 @@
 .barlist__val { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-2); }
 .ins-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
 .ins-head h2 { margin: 0; font-size: 18px; }
+.ins-wide { grid-column: 1 / -1; }
+.health { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.kpi--link { cursor: pointer; }
+.kpi--link:hover { border-color: #3a4a6e; }
+.review-due { color: #fbbf24; }
+.health__sep { width: 1px; height: 18px; background: var(--border-strong); margin: 0 4px; }
+.nowrap { white-space: nowrap; }

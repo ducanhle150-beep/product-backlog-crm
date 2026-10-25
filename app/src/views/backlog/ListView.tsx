@@ -3,17 +3,17 @@ import type { ReactNode } from 'react';
 import { DndContext, PointerSensor, closestCenter, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { IconChevronDown, IconChevronRight, IconLayoutColumns, IconLayoutList, IconMap, IconPlus } from '@tabler/icons-react';
+import { IconChevronDown, IconChevronRight, IconLayoutList, IconMap, IconPlus, IconSparkles } from '@tabler/icons-react';
 import { format, parseISO } from 'date-fns';
 import type { Issue, Sprint } from '../../data/types';
 import { useStore } from '../../store/useStore';
-import { useIssueFilter } from '../../store/ui';
-import { useScoring } from '../../store/hooks';
-import { averageVelocity, points } from '../../lib/metrics';
-import { rankByMethod } from '../../lib/prioritization';
+import { useIssueFilter, useUi } from '../../store/ui';
+import { useHealthFilters } from '../../store/hooks';
+import { points } from '../../lib/metrics';
 import { Badge, Button } from '../../components/ui/primitives';
-import { PriorityIcon, StatusIcon, TypeIcon } from '../../components/ui/icons';
-import { BacklogRow, ScoreBadge } from './BacklogRow';
+import { StatusIcon, TypeIcon } from '../../components/ui/icons';
+import { BacklogRow } from './BacklogRow';
+import { RefinementView, useNeedsRefinement } from './RefinementView';
 
 const BACKLOG = 'backlog';
 const PAGE = 20;
@@ -32,9 +32,9 @@ function Group({ id, header, issues, footer, limit }: { id: string; header: Reac
       {open && (
         <SortableContext items={shown.map((i) => i.id)} strategy={verticalListSortingStrategy}>
           {shown.map((i) => <BacklogRow key={i.id} issue={i} />)}
-          {issues.length === 0 && <div className="bgroup__empty">Kéo issue vào đây</div>}
+          {issues.length === 0 && <div className="bgroup__empty">Kéo item vào đây</div>}
           {limit && !more && issues.length > limit && (
-            <button className="bgroup__more" onClick={() => setMore(true)}>Còn {issues.length - limit} issue</button>
+            <button className="bgroup__more" onClick={() => setMore(true)}>Còn {issues.length - limit} item</button>
           )}
           {footer}
         </SortableContext>
@@ -48,7 +48,7 @@ function QuickCreate() {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState('');
   if (!editing) {
-    return <button className="bgroup__new" onClick={() => setEditing(true)}><IconPlus size={15} /> New issue</button>;
+    return <button className="bgroup__new" onClick={() => setEditing(true)}><IconPlus size={15} /> New item</button>;
   }
   return (
     <div className="quick-create">
@@ -57,7 +57,7 @@ function QuickCreate() {
         autoFocus
         className="grow"
         value={title}
-        placeholder="Tiêu đề issue — Enter để tạo tiếp, Esc để đóng"
+        placeholder="Tiêu đề item — Enter để tạo tiếp, Esc để đóng"
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Escape') { setEditing(false); setTitle(''); }
@@ -70,7 +70,6 @@ function QuickCreate() {
 }
 
 function SprintHeader({ sprint, issues, go }: { sprint: Sprint; issues: Issue[]; go(p: string): void }) {
-  const capacity = Object.values(sprint.capacity).reduce((a, b) => a + b, 0);
   const pts = points(issues);
   return (
     <>
@@ -79,8 +78,7 @@ function SprintHeader({ sprint, issues, go }: { sprint: Sprint; issues: Issue[];
         Planned
       </Badge>
       <span className="muted">
-        {format(parseISO(sprint.startDate), 'MMM d')} – {format(parseISO(sprint.endDate), 'MMM d')} · {issues.length} issue · {pts}
-        {capacity ? ` / ${capacity}` : ''} pt
+        {format(parseISO(sprint.startDate), 'MMM d')} – {format(parseISO(sprint.endDate), 'MMM d')} · {issues.length} item · {pts} pt
       </span>
       {sprint.goal && <span className="muted truncate" style={{ maxWidth: 420 }}>· {sprint.goal}</span>}
       <span className="grow" />
@@ -88,55 +86,6 @@ function SprintHeader({ sprint, issues, go }: { sprint: Sprint; issues: Issue[];
         Plan sprint
       </Button>
     </>
-  );
-}
-
-/** Bucket kiểu ProductPlan: P1 = vừa sprint tới (theo velocity), P2 ≈ 3 tháng, còn lại Longer-term; bug tách riêng. */
-function BucketsView({ issues }: { issues: Issue[] }) {
-  const sprints = useStore((s) => s.sprints);
-  const all = useStore((s) => s.issues);
-  const { method, settings } = useScoring();
-  const openIssue = useStore((s) => s.openIssue);
-  const velocity = averageVelocity(sprints, all) || 30;
-  const ranked = rankByMethod(issues.filter((i) => i.type !== 'bug'), method, settings);
-  const buckets: Record<string, Issue[]> = { p1: [], p2: [], long: [], bugs: issues.filter((i) => i.type === 'bug') };
-  let acc = 0;
-  for (const { issue } of ranked) {
-    acc += issue.storyPoints ?? 3;
-    buckets[acc <= velocity ? 'p1' : acc <= velocity * 6 ? 'p2' : 'long'].push(issue);
-  }
-  const cols = [
-    { id: 'p1', name: 'High priority', sub: `Sprint tới · ≤ ${velocity} pt (velocity TB)`, color: '#22c55e' },
-    { id: 'p2', name: 'Second-level priority', sub: '≈ 3 tháng tới (6 sprint)', color: '#3b82f6' },
-    { id: 'long', name: 'Longer-term', sub: 'Cân nhắc chuyển sang Parking lot', color: '#8a8a8a' },
-    { id: 'bugs', name: 'Bugs', sub: 'Theo severity', color: '#e5484d' },
-  ];
-  return (
-    <div className="buckets">
-      {cols.map((c) => (
-        <section key={c.id} className="bucket">
-          <header>
-            <span className="bucket__bar" style={{ background: c.color }} />
-            <div>
-              <strong>{c.name}</strong> <span className="muted">{buckets[c.id].length} · {points(buckets[c.id])} pt</span>
-              <div className="muted small">{c.sub}</div>
-            </div>
-          </header>
-          {buckets[c.id].map((i) => (
-            <button key={i.id} className="mini-card" onClick={() => openIssue(i.id)}>
-              <div className="row">
-                <PriorityIcon priority={i.priority} />
-                <TypeIcon type={i.type} />
-                <span className="issue-key">{i.key}</span>
-                <span className="grow" />
-                <ScoreBadge issue={i} />
-              </div>
-              <div className="mini-card__title">{i.title}</div>
-            </button>
-          ))}
-        </section>
-      ))}
-    </div>
   );
 }
 
@@ -187,16 +136,20 @@ export function ListView({ go }: { go(path: string): void }) {
   const sprints = useStore((s) => s.sprints);
   const reorder = useStore((s) => s.reorder);
   const moveToSprint = useStore((s) => s.moveToSprint);
-  const createSprint = useStore((s) => s.createSprint);
   const filter = useIssueFilter();
-  const { method } = useScoring();
-  const [view, setView] = useState<'list' | 'buckets' | 'map'>('list');
+  const [view, setView] = useState<'list' | 'map' | 'refine'>('list');
+  const { notReady } = useNeedsRefinement();
+  const healthFilters = useHealthFilters();
+  const { healthFilter, setHealthFilter } = useUi();
+  const hf = healthFilter ? healthFilters[healthFilter] : undefined;
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const openSprints = sprints.filter((s) => s.state === 'planned').sort((a, b) => a.startDate.localeCompare(b.startDate));
-  const active = sprints.find((s) => s.state === 'active');
-  const activeTasks = active ? issues.filter((i) => i.sprintId === active.id && i.kind === 'task' && !i.archived) : [];
-  const visible = useMemo(() => issues.filter((i) => i.kind === 'backlog').filter(filter).sort((a, b) => a.rank - b.rank), [issues, filter]);
+  const visible = useMemo(
+    () => issues.filter((i) => i.kind === 'backlog').filter(filter).filter((i) => !hf || hf.test(i)).sort((a, b) => a.rank - b.rank),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [issues, filter, hf?.id, healthFilters],
+  );
   const groups = useMemo(() => {
     const g = new Map<string, Issue[]>();
     for (const s of openSprints) g.set(s.id, visible.filter((i) => i.sprintId === s.id));
@@ -234,22 +187,22 @@ export function ListView({ go }: { go(path: string): void }) {
       <div className="subbar">
         <div className="seg seg--sm">
           <button className={view === 'list' ? 'is-active' : ''} onClick={() => setView('list')}><IconLayoutList size={15} /> List</button>
-          <button className={view === 'buckets' ? 'is-active' : ''} onClick={() => setView('buckets')}><IconLayoutColumns size={15} /> Buckets</button>
           <button className={view === 'map' ? 'is-active' : ''} onClick={() => setView('map')}><IconMap size={15} /> Story map</button>
+          <button className={view === 'refine' ? 'is-active' : ''} onClick={() => setView('refine')}><IconSparkles size={15} /> Refinement{notReady.length > 0 && <span className="subtab__count">{notReady.length}</span>}</button>
         </div>
-        <span className="muted small">Điểm theo <button className="link-btn" onClick={() => go('backlog/prioritize')}>{method.name}</button> · ● = Definition of Ready · số = story point</span>
+        <span className="muted small">● = Definition of Ready · số = story point · điểm ưu tiên xem ở tab <button className="link-btn" onClick={() => go('backlog/prioritize')}>Ưu tiên</button></span>
       </div>
 
-      {view === 'buckets' && <BucketsView issues={backlogIssues} />}
+      {hf && view !== 'refine' && (
+        <div className="hf-banner">
+          Đang lọc: <strong>{hf.label}</strong> · {visible.length} item
+          <button className="link-btn" onClick={() => setHealthFilter(null)}>Xoá lọc</button>
+        </div>
+      )}
+      {view === 'refine' && <RefinementView />}
       {view === 'map' && <StoryMapView issues={visible} sprints={sprints} />}
       {view === 'list' && (
         <div className="list-scroll">
-          {active && (
-            <button className="active-sprint-link" onClick={() => go('board')}>
-              <StatusIcon status="doing" /> <strong>{active.name}</strong> đang chạy · {activeTasks.length} task · {points(activeTasks)} pt đã chuyển sang Bảng <span className="link-btn">Mở Bảng →</span>
-            </button>
-          )}
-          <button className="create-sprint" onClick={() => createSprint()}><IconPlus size={15} /> Tạo sprint</button>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             {openSprints.map((s) => (
               <Group key={s.id} id={s.id} issues={groups.get(s.id)!} header={<SprintHeader sprint={s} issues={groups.get(s.id)!} go={go} />} />
@@ -258,7 +211,7 @@ export function ListView({ go }: { go(path: string): void }) {
               id={BACKLOG}
               issues={backlogIssues}
               limit={PAGE}
-              header={<><strong>Backlog</strong><span className="muted">Issue chưa thuộc sprint nào · {backlogIssues.length} issue · {points(backlogIssues)} pt</span></>}
+              header={<><strong>Backlog</strong><span className="muted">Item chưa thuộc sprint nào · {backlogIssues.length} item · {points(backlogIssues)} pt</span></>}
               footer={<QuickCreate />}
             />
           </DndContext>

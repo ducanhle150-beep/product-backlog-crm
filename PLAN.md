@@ -13,6 +13,25 @@
   - **Product Backlog** thành mục riêng trên sidebar (Quản lý công việc), tách khỏi **Bảng**. Bảng = Kanban + Insights (velocity, burndown, tiến độ sprint, delivery signals). Product Backlog = Danh sách · Ưu tiên · Grooming · Sprint Planning · Ideas · Insights (backlog health/DEEP), Review + Thiết lập là tab phụ bên phải. Phân quyền: để sau.
   - Chọn prioritization method **chỉ ở Thiết lập** (giữ giao diện Thiết lập cũ: dropdown trong card Prioritization). Tab Ưu tiên và panel chi tiết chỉ dùng method đang chọn.
   - Fix UI: nút hành động thẻ Ideas tràn khỏi thẻ; chữ ô method "ICE×CAF" lệch dọc.
+- [x] **V1.3** (commit)
+  - Ideas: bỏ khối COPE (Capture/Organize/Prioritize/Execute) và checklist intake gate; "Đưa vào backlog" không còn điều kiện.
+  - Ideas: bỏ Parking lot (tab + nút) và dòng hướng dẫn; tab Inbox đổi tên thành **List**.
+  - Panel backlog item: ẩn checklist **INVEST** và **Definition of Done** (DoD dành cho task khi DONE trên Bảng).
+  - Bảng: kéo task sang DONE chuyển thẳng, bỏ popup checklist DoD.
+  - Sidebar: Product Backlog nằm ngay dưới Bảng.
+  - Bỏ **planning poker** và tab **Grooming** (session, prep checklist, timer, attendees). Thay bằng chế độ **Refinement** trong Danh sách (cạnh List / Buckets / Story map): duyệt lần lượt item top backlog chưa đạt DoR, sửa user story / AC / estimate / DoR → "Ready → item tiếp", tách story/epic, đưa lên đầu, lưu trữ.
+  - Insights (Backlog): DEEP + health signals gộp thành 1 card **Backlog health** (bỏ KPI DEEP riêng).
+  - Bỏ **Retrospective** (tab con trong Review) và dữ liệu retro của sprint; Review còn Backlog review + Sprint review.
+  - Bỏ hẳn tab **Review** (backlog review checklist, sprint review, feedback). Phần hữu ích gộp vào card Backlog health: mỗi tín hiệu + KPI có link "Xem N item →" mở Danh sách đã lọc (banner "Đang lọc … · Xoá lọc"), thêm dòng "Review lần cuối · Đánh dấu đã review".
+  - Sprint Planning: bỏ nhập capacity theo member và bảng theo member; card còn **Committed vs velocity** (velocity TB 3 sprint làm giới hạn). Sprint goal template dùng velocity. Fix cột sprint bị cắt ở màn 1470px.
+  - Thiết lập: bỏ **Vision** (chỉ là text, không dùng ở đâu). Giữ **Strategic goals** (field trên item/epic, Insights theo goal, tín hiệu "không gắn goal" — tương đương Linear Initiatives / Jira Goals).
+  - Danh sách: bỏ chế độ **Buckets** (trùng rank + Sprint Planning). Còn List · Story map · Refinement.
+  - Ưu tiên: bỏ card "Tránh anti-pattern khi ưu tiên".
+  - Thiết lập: bỏ card "Sprint & vệ sinh backlog" (độ dài sprint, stale). Sprint mới mặc định 12 ngày, sửa ngày ngay trong Sprint Planning; ngưỡng stale cố định 6 tháng (`STALE_MONTHS`).
+  - Thiết lập: gộp phần prioritization thành **1 card "Prioritization template"** (chọn template, mô tả/công thức/nguồn, tóm tắt cấu hình). Cấu hình riêng từng template mở bằng **modal "Cấu hình template"** (SAE ICE × CAF: đối thủ, trọng số, adoption, ngưỡng phase; MoSCoW: điểm vote, stakeholders), các ô nhập xếp dạng bảng cho thẳng hàng. Template không có cấu hình → nút tắt. Đổi chữ "method" → "template" ở Ưu tiên và panel chi tiết.
+  - Sprint Planning: thêm **Xoá sprint** (chỉ sprint planned, có xác nhận; item trả về Product Backlog). Danh sách: bỏ dòng "Tạo sprint" và dòng sprint đang chạy — tạo/xoá sprint chỉ ở Sprint Planning.
+  - Danh sách: mỗi dòng chỉ hiện **chip Epic** (màu epic), không hiện labels (labels vẫn xem/sửa trong panel chi tiết); bỏ badge điểm ưu tiên khỏi dòng — điểm chỉ xem ở tab Ưu tiên (và Sprint Planning/Refinement).
+  - Nút **Filter** chạy thật (giống CRM gốc): menu 4 nhóm Người được giao · Ưu tiên · Loại · Epic → danh sách con có nút ‹ quay lại, chọn nhiều; có "Chưa giao" / "Không thuộc epic nào", badge số filter, "Xoá tất cả filter". Áp dụng cho Danh sách, Ưu tiên và Bảng.
 - [ ] Chờ user: tên đối thủ Fraud thật, DoR/DoD của team, độ dài sprint, màu label Documentation
 
 Chạy: `cd /Users/bssgroup/crm-backlog/app && npm run dev` → http://localhost:5173 · Test: `npm test`

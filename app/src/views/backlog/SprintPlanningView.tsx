@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { IconAlertTriangle, IconArrowLeft, IconArrowRight, IconChartLine, IconFlag, IconLock, IconPlayerPlay, IconPlus, IconTarget } from '@tabler/icons-react';
+import { IconAlertTriangle, IconArrowLeft, IconArrowRight, IconChartLine, IconFlag, IconLock, IconPlayerPlay, IconPlus, IconTarget, IconTrash } from '@tabler/icons-react';
 import { differenceInCalendarDays, format, parseISO } from 'date-fns';
 import type { Issue, Sprint } from '../../data/types';
-import { MEMBERS } from '../../data/seed';
 import { useStore } from '../../store/useStore';
 import { useBacklogIssues, useScoring } from '../../store/hooks';
 import { averageVelocity, points, sprintIssues } from '../../lib/metrics';
@@ -31,13 +30,13 @@ function ItemLine({ issue, action, warn }: { issue: Issue; action: ReactNode; wa
   );
 }
 
-function GoalBuilder({ sprint, items, capacity }: { sprint: Sprint; items: Issue[]; capacity: number }) {
+function GoalBuilder({ sprint, items, velocity }: { sprint: Sprint; items: Issue[]; velocity: number }) {
   const updateSprint = useStore((s) => s.updateSprint);
   const [deliver, setDeliver] = useState('');
   const [so, setSo] = useState('');
   const compose = () =>
     updateSprint(sprint.id, {
-      goal: `Mục tiêu là deliver ${deliver || '…'}. Để làm được, cần hoàn thành ${items.length} item. Capacity của team là ${capacity} pt. Vì vậy sprint này sẽ ${so || '…'}.`,
+      goal: `Mục tiêu là deliver ${deliver || '…'}. Để làm được, cần hoàn thành ${items.length} item. Velocity của team khoảng ${velocity} pt. Vì vậy sprint này sẽ ${so || '…'}.`,
     });
   return (
     <div className="card">
@@ -47,7 +46,7 @@ function GoalBuilder({ sprint, items, capacity }: { sprint: Sprint; items: Issue
         <div className="goal-tpl">
           <span>Mục tiêu là deliver</span><input className="input" value={deliver} onChange={(e) => setDeliver(e.target.value)} placeholder="email quota cho merchant" />
           <span>Cần</span><strong>{items.length} item</strong>
-          <span>Capacity</span><strong>{capacity} pt</strong>
+          <span>Velocity</span><strong>{velocity} pt</strong>
           <span>Vì vậy sẽ</span><input className="input" value={so} onChange={(e) => setSo(e.target.value)} placeholder="ưu tiên notification trước integrations" />
         </div>
         <Button size="sm" variant="ghost" onClick={compose}>Ghép thành sprint goal</Button>
@@ -56,46 +55,19 @@ function GoalBuilder({ sprint, items, capacity }: { sprint: Sprint; items: Issue
   );
 }
 
-function CapacityCard({ sprint, items, velocity }: { sprint: Sprint; items: Issue[]; velocity: number }) {
-  const updateSprint = useStore((s) => s.updateSprint);
-  const assignees = [...new Set([...Object.keys(sprint.capacity), ...items.map((i) => i.assigneeId).filter((x): x is string => !!x)])];
-  const [adding, setAdding] = useState('');
-  const total = Object.values(sprint.capacity).reduce((a, b) => a + b, 0);
+function VelocityCard({ items, velocity }: { items: Issue[]; velocity: number }) {
   const committed = points(items);
-  const limit = total || velocity;
+  const over = committed > velocity;
   return (
     <div className="card">
-      <div className="card__head">Capacity & velocity</div>
+      <div className="card__head">Committed vs velocity</div>
       <div className="card__body">
         <div className="cap-summary">
-          <div><div className="muted small">Committed</div><strong className={committed > limit ? 'over' : ''}>{committed} pt</strong></div>
-          <div><div className="muted small">Capacity</div><strong>{total || '—'} pt</strong></div>
+          <div><div className="muted small">Committed</div><strong className={over ? 'over' : ''}>{committed} pt</strong></div>
           <div><div className="muted small">Velocity TB 3 sprint</div><strong>{velocity} pt</strong></div>
         </div>
-        <Progress value={(committed / Math.max(1, limit)) * 100} color={committed > limit ? 'var(--danger)' : 'var(--accent)'} height={6} />
-        {committed > limit && <div className="warn"><IconAlertTriangle size={14} /> Vượt {committed - limit} pt so với {total ? 'capacity' : 'velocity'} — bỏ bớt item hoặc tách nhỏ.</div>}
-        <table className="cap-table">
-          <tbody>
-            {assignees.map((id) => {
-              const load = points(items.filter((i) => i.assigneeId === id));
-              const cap = sprint.capacity[id] ?? 0;
-              return (
-                <tr key={id}>
-                  <td><span className="row"><Avatar member={memberById(id)} size={18} /><span className="truncate small">{memberById(id)?.name}</span></span></td>
-                  <td className={`small ${cap && load > cap ? 'over' : 'muted'}`}>{load} pt</td>
-                  <td><input className="input" type="number" min={0} style={{ width: 60 }} value={cap || ''} placeholder="cap" onChange={(e) => updateSprint(sprint.id, { capacity: { ...sprint.capacity, [id]: Number(e.target.value) } })} /></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <div className="row" style={{ marginTop: 6 }}>
-          <select className="select grow" value={adding} onChange={(e) => setAdding(e.target.value)}>
-            <option value="">+ Thêm thành viên…</option>
-            {MEMBERS.filter((m) => !assignees.includes(m.id)).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-          </select>
-          <Button size="sm" disabled={!adding} onClick={() => { updateSprint(sprint.id, { capacity: { ...sprint.capacity, [adding]: 5 } }); setAdding(''); }}>Thêm</Button>
-        </div>
+        <Progress value={(committed / Math.max(1, velocity)) * 100} color={over ? 'var(--danger)' : 'var(--accent)'} height={6} />
+        {over && <div className="warn"><IconAlertTriangle size={14} /> Vượt {committed - velocity} pt so với velocity — bỏ bớt item hoặc tách nhỏ.</div>}
       </div>
     </div>
   );
@@ -108,8 +80,8 @@ function CompleteDialog({ sprint, items, onClose }: { sprint: Sprint; items: Iss
   return (
     <Modal title={`Hoàn thành ${sprint.name}`} width={640} onClose={onClose}
       footer={<><Button variant="ghost" onClick={onClose}>Huỷ</Button><Button variant="primary" onClick={() => { completeSprint(sprint.id, carry); onClose(); }}>Hoàn thành sprint</Button></>}>
-      <p style={{ marginTop: 0 }}>{items.length - unfinished.length}/{items.length} item done · {points(items.filter((i) => i.status === 'done'))}/{points(items)} pt.</p>
-      <p className="muted small">Item chưa xong: nếu vẫn ưu tiên cao → sang sprint sau, ngược lại → trả về product backlog.</p>
+      <p style={{ marginTop: 0 }}>{items.length - unfinished.length}/{items.length} issue done · {points(items.filter((i) => i.status === 'done'))}/{points(items)} pt.</p>
+      <p className="muted small">Issue chưa xong: nếu vẫn ưu tiên cao → sang sprint sau, ngược lại → trả về Product Backlog thành item.</p>
       {unfinished.map((i) => (
         <div key={i.id} className="sp-item">
           <StatusIcon status={i.status} /><span className="issue-key">{i.key}</span><span className="truncate grow">{i.title}</span>
@@ -140,8 +112,8 @@ function ActiveSprint({ sprint, items }: { sprint: Sprint; items: Issue[] }) {
       </div>
       <div className="card">
         <div className="card__head">
-          <IconLock size={15} /> Task trên Bảng · {items.length}
-          <span className="muted small">— scope khoá khi sprint chạy; item thêm sau tính là scope change</span>
+          <IconLock size={15} /> Issue trên Bảng · {items.length}
+          <span className="muted small">— scope khoá khi sprint chạy; issue thêm sau tính là scope change</span>
           <span className="grow" />
           <Button size="sm" variant="ghost" icon={<IconChartLine size={14} />} onClick={() => { window.location.hash = '/board/insights'; }}>Velocity & burndown</Button>
           <Button size="sm" variant="primary" icon={<IconFlag size={14} />} onClick={() => setCompleting(true)}>Hoàn thành sprint</Button>
@@ -159,7 +131,6 @@ function PlannedSprint({ sprint, items }: { sprint: Sprint; items: Issue[] }) {
   const backlog = useBacklogIssues();
   const { ready, byId } = useScoring();
   const velocity = averageVelocity(store.sprints, store.issues);
-  const capacity = Object.values(sprint.capacity).reduce((a, b) => a + b, 0) || velocity;
   const hasActive = store.sprints.some((s) => s.state === 'active');
   const [readyFirst, setReadyFirst] = useState(true);
 
@@ -192,8 +163,8 @@ function PlannedSprint({ sprint, items }: { sprint: Sprint; items: Issue[] }) {
       </div>
       <div className="sp-plan__grid">
         <div className="sp-col">
-          <GoalBuilder sprint={sprint} items={items} capacity={capacity} />
-          <CapacityCard sprint={sprint} items={items} velocity={velocity} />
+          <GoalBuilder sprint={sprint} items={items} velocity={velocity} />
+          <VelocityCard items={items} velocity={velocity} />
         </div>
         <div className="card sp-col--list">
           <div className="card__head">
@@ -208,7 +179,7 @@ function PlannedSprint({ sprint, items }: { sprint: Sprint; items: Issue[] }) {
           </div>
         </div>
         <div className="card sp-col--list">
-          <div className="card__head">{sprint.name} · {items.length} item · {points(items)}/{capacity} pt</div>
+          <div className="card__head">{sprint.name} · {items.length} item · {points(items)}/{velocity} pt</div>
           <div className="card__body sp-list">
             {issuesWithWarnings.length > 0 && <div className="warn" style={{ marginTop: 0, marginBottom: 8 }}><IconAlertTriangle size={14} /> {issuesWithWarnings.length} item chưa sẵn sàng hoặc có dependency — hover ⚠ để xem.</div>}
             {sorted.map((i) => (
@@ -226,6 +197,8 @@ export function SprintPlanningView() {
   const sprints = useStore((s) => s.sprints);
   const issues = useStore((s) => s.issues);
   const createSprint = useStore((s) => s.createSprint);
+  const deleteSprint = useStore((s) => s.deleteSprint);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const ordered = [...sprints].sort((a, b) => a.startDate.localeCompare(b.startDate));
   const [selected, setSelected] = useState(() => (sprints.find((s) => s.state === 'planned') ?? sprints.find((s) => s.state === 'active') ?? ordered.at(-1))?.id);
   const sprint = sprints.find((s) => s.id === selected);
@@ -248,8 +221,29 @@ export function SprintPlanningView() {
         <div className="sp-head">
           <h2>{sprint.name}</h2>
           <span className="muted">{format(parseISO(sprint.startDate), 'MMM d')} – {format(parseISO(sprint.endDate), 'MMM d, yyyy')}</span>
+          {sprint.state === 'planned' && (
+            <Button size="sm" variant="danger" icon={<IconTrash size={14} />} style={{ marginLeft: 'auto' }} onClick={() => setConfirmDelete(true)}>Xoá sprint</Button>
+          )}
           {sprint.state !== 'planned' && sprint.goal && <span className="sp-goal">🎯 {sprint.goal}</span>}
         </div>
+      )}
+      {confirmDelete && sprint && (
+        <Modal
+          title={`Xoá ${sprint.name}?`}
+          onClose={() => setConfirmDelete(false)}
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setConfirmDelete(false)}>Huỷ</Button>
+              <Button variant="danger" onClick={() => {
+                deleteSprint(sprint.id);
+                setConfirmDelete(false);
+                setSelected(sprints.find((s) => s.id !== sprint.id && s.state === 'planned')?.id ?? sprints.find((s) => s.state === 'active')?.id ?? ordered.filter((s) => s.id !== sprint.id).at(-1)?.id);
+              }}>Xoá sprint</Button>
+            </>
+          }
+        >
+          {items.length ? `${items.length} item (${points(items)} pt) trong sprint sẽ trả về Product Backlog, giữ nguyên điểm và thứ tự.` : 'Sprint chưa có item nào.'}
+        </Modal>
       )}
       {sprint?.state === 'active' && <ActiveSprint sprint={sprint} items={items} />}
       {sprint?.state === 'planned' && <PlannedSprint sprint={sprint} items={items} />}
@@ -258,7 +252,6 @@ export function SprintPlanningView() {
           <div className="card__body">
             <p style={{ marginTop: 0 }}>Committed <strong>{sprint.committedPoints ?? points(items)} pt</strong> · Completed <strong>{sprint.completedPoints ?? points(items.filter((i) => i.status === 'done'))} pt</strong></p>
             {items.map((i) => <ItemLine key={i.id} issue={i} action={<StatusIcon status={i.status} />} />)}
-            <p className="muted small">Sprint review & retrospective ở tab Review.</p>
           </div>
         </div>
       )}
