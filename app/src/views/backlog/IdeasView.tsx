@@ -73,7 +73,7 @@ function IdeaCard({ idea }: { idea: Idea }) {
               </label>
             ))}
           </div>
-          <div className="row" style={{ marginTop: 8 }}>
+          <div className="idea__actions">
             <span style={{ whiteSpace: 'nowrap' }} className={`small ${passed >= MIN_GATE ? '' : 'muted'}`}>Intake gate {passed}/{GATE.length}</span>
             <span className="grow" />
             <Button size="sm" variant="ghost" icon={<IconX size={14} />} onClick={() => updateIdea(idea.id, { status: 'rejected' })}>Từ chối</Button>

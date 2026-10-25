@@ -1,12 +1,18 @@
 # Plan: Product Backlog prototype — replica CRM "Quản lý công việc"
 
 ## Tiến độ (cập nhật 2026-10-24)
+- [x] **V1.1** (commit) — 6 bước đầu:
 - [x] Bước 1 — Scaffold, tokens, shell, tab Bảng (Kanban), tab Danh sách (List / Buckets / Story map)
 - [x] Bước 2 — Store + seed + IssueDrawer + kéo thả rank / sprint
 - [x] Bước 3 — Ưu tiên: 9 method + 15 vitest (CAF 0.6375 từ xlsx, MoSCoW 43 từ PDF, WSJF…)
 - [x] Bước 4 — Grooming: session, prep checklist, timer, planning poker, DoR/INVEST, tách story/epic
 - [x] Bước 5 — Sprint Planning (goal template, capacity, velocity, DoR/dependency warning, start/complete + carry-over) + Insights (velocity, burndown, DEEP, health signals)
 - [x] Bước 6 — Review (backlog review, sprint review, retro), Ideas (COPE + intake gate), Thiết lập (vision, goals, DoR/DoD, CAF, reset)
+- [x] **V1.2** (commit)
+  - Tách **backlog item** (`kind: 'backlog'`, có đủ cấu hình PM, mở drawer) và **task** (`kind: 'task'`, chỉ nằm trên Bảng, bấm không mở gì). Item sang Bảng khi Start sprint hoặc bấm "Đẩy sang Bảng" → vào cột **PLANNED** (thay cột Backlog cũ, đứng trước TO DO). Carry-over "về Backlog" biến task lại thành backlog item. Seed: 26 issue Backlog thật = backlog item (5 cái trong Sprint 5 planned), 18 issue còn lại + 3 task demo = task. localStorage v1 tự reset về seed v2.
+  - **Product Backlog** thành mục riêng trên sidebar (Quản lý công việc), tách khỏi **Bảng**. Bảng = Kanban + Insights (velocity, burndown, tiến độ sprint, delivery signals). Product Backlog = Danh sách · Ưu tiên · Grooming · Sprint Planning · Ideas · Insights (backlog health/DEEP), Review + Thiết lập là tab phụ bên phải. Phân quyền: để sau.
+  - Chọn prioritization method **chỉ ở Thiết lập** (giữ giao diện Thiết lập cũ: dropdown trong card Prioritization). Tab Ưu tiên và panel chi tiết chỉ dùng method đang chọn.
+  - Fix UI: nút hành động thẻ Ideas tràn khỏi thẻ; chữ ô method "ICE×CAF" lệch dọc.
 - [ ] Chờ user: tên đối thủ Fraud thật, DoR/DoD của team, độ dài sprint, màu label Documentation
 
 Chạy: `cd /Users/bssgroup/crm-backlog/app && npm run dev` → http://localhost:5173 · Test: `npm test`

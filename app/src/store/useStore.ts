@@ -32,6 +32,7 @@ const seed = (): Data => {
 
 export interface Store extends Data {
   selectedIssueId: string | null;
+  /** Chỉ mở panel cho backlog item — task trên Bảng không có panel. */
   openIssue(id: string | null): void;
 
   updateIssue(id: string, patch: Partial<Issue>, activity?: string): void;
@@ -45,6 +46,8 @@ export interface Store extends Data {
   createSprint(patch?: Partial<Sprint>): Sprint;
   updateSprint(id: string, patch: Partial<Sprint>): void;
   moveToSprint(issueId: string, sprintId: string | undefined): void;
+  /** Backlog item → task trên Bảng (cột PLANNED, vào sprint đang chạy nếu có). */
+  pushToBoard(issueId: string): void;
   startSprint(id: string): void;
   completeSprint(id: string, carry: Record<string, 'next' | 'backlog'>): void;
 
@@ -69,7 +72,10 @@ export const useStore = create<Store>()(
     (set, get) => ({
       ...seed(),
       selectedIssueId: null,
-      openIssue: (id) => set({ selectedIssueId: id }),
+      openIssue: (id) => {
+        if (id && get().issues.find((i) => i.id === id)?.kind === 'task') return;
+        set({ selectedIssueId: id });
+      },
 
       updateIssue: (id, patch, activity) =>
         set((s) => ({
@@ -92,7 +98,7 @@ export const useStore = create<Store>()(
         const num = Math.max(...s.issues.map((i) => i.num)) + 1;
         const maxRank = Math.max(0, ...s.issues.map((i) => i.rank));
         const issue: Issue = {
-          id: `i${num}`, key: `FRAUD_F-${num}`, num, type: 'story', status: 'backlog', priority: 'medium',
+          id: `i${num}`, key: `FRAUD_F-${num}`, num, kind: 'backlog', type: 'story', status: 'backlog', priority: 'medium',
           labelIds: [], createdAt: nowIso(), updatedAt: nowIso(), rank: maxRank + 1000, description: '',
           acceptanceCriteria: [], dor: {}, dod: {}, invest: {}, blockedBy: [], whyNow: '', successMetric: '',
           scores: {}, scoreReasoning: '', votes: [], activity: [{ at: nowIso(), text: 'Tạo issue' }],
@@ -155,14 +161,24 @@ export const useStore = create<Store>()(
         });
         const target = s.sprints.find((sp) => sp.id === sprintId);
         set({ sprints: changes });
-        get().updateIssue(issueId, { sprintId }, target ? `Đưa vào ${target.name}` : 'Đưa về Backlog');
+        const patch: Partial<Issue> = { sprintId };
+        if (target?.state === 'active' && issue.kind === 'backlog') Object.assign(patch, { kind: 'task', status: 'planned' });
+        if (!target && issue.kind === 'task') Object.assign(patch, { kind: 'backlog', status: 'backlog' });
+        get().updateIssue(issueId, patch, target ? (patch.kind === 'task' ? `Đẩy sang Bảng (${target.name})` : `Đưa vào ${target.name}`) : 'Đưa về Product Backlog');
+      },
+
+      pushToBoard: (issueId) => {
+        const active = get().sprints.find((sp) => sp.state === 'active');
+        if (active) return get().moveToSprint(issueId, active.id);
+        get().updateIssue(issueId, { kind: 'task', status: 'planned' }, 'Đẩy sang Bảng');
       },
 
       startSprint: (id) => {
         const s = get();
         if (s.sprints.some((sp) => sp.state === 'active')) return;
         set({ sprints: s.sprints.map((sp) => (sp.id === id ? { ...sp, state: 'active', startDate: nowIso().slice(0, 10) } : sp)) });
-        s.issues.filter((i) => i.sprintId === id && i.status === 'backlog').forEach((i) => get().updateIssue(i.id, { status: 'todo' }));
+        s.issues.filter((i) => i.sprintId === id && i.kind === 'backlog').forEach((i) => get().updateIssue(i.id, { kind: 'task', status: 'planned' }, 'Start sprint → đẩy sang Bảng'));
+        if (get().selectedIssueId && get().issues.find((i) => i.id === get().selectedIssueId)?.kind === 'task') set({ selectedIssueId: null });
       },
 
       completeSprint: (id, carry) => {
@@ -177,7 +193,11 @@ export const useStore = create<Store>()(
           sprints: st.sprints.map((sp) => (sp.id === id ? { ...sp, state: 'completed', committedPoints: committed, completedPoints: completed } : sp)),
         }));
         for (const [issueId, where] of Object.entries(carry)) {
-          get().updateIssue(issueId, { sprintId: where === 'next' ? next?.id : undefined }, where === 'next' ? `Carry-over từ ${sprint.name}` : `Trả về Backlog từ ${sprint.name}`);
+          get().updateIssue(
+            issueId,
+            where === 'next' ? { sprintId: next?.id } : { sprintId: undefined, kind: 'backlog', status: 'backlog' },
+            where === 'next' ? `Carry-over từ ${sprint.name}` : `Trả về Product Backlog từ ${sprint.name}`,
+          );
         }
       },
 
@@ -217,7 +237,9 @@ export const useStore = create<Store>()(
     }),
     {
       name: 'crm-backlog-prototype',
-      version: 1,
+      version: 2,
+      // v2 tách backlog item / task → dữ liệu cũ không tương thích, nạp lại seed.
+      migrate: () => seed(),
       partialize: ({ issues, epics, sprints, sessions, ideas, settings }) => ({ issues, epics, sprints, sessions, ideas, settings }),
     },
   ),

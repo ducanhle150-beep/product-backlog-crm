@@ -8,3 +8,5 @@
 .idea__count:hover { border-color: var(--accent); color: var(--accent-text); }
 .idea__quote { margin-top: 8px; padding: 6px 10px; border-left: 3px solid #f59e0b; background: var(--bg-card); border-radius: 4px; font-style: italic; color: var(--text-2); }
 .idea__gate { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+.idea__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 10px; }
+.idea__actions .grow { min-width: 8px; }

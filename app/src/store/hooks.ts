@@ -20,8 +20,8 @@ export function useScoring() {
   };
 }
 
-/** Issue chưa thuộc sprint nào, chưa done/archived, theo rank. */
+/** Backlog item (chưa sang Bảng) chưa thuộc sprint nào, theo rank. */
 export function useBacklogIssues() {
   const issues = useStore((s) => s.issues);
-  return useMemo(() => issues.filter((i) => !i.archived && !i.sprintId && i.status !== 'done').sort((a, b) => a.rank - b.rank), [issues]);
+  return useMemo(() => issues.filter((i) => i.kind === 'backlog' && !i.archived && !i.sprintId).sort((a, b) => a.rank - b.rank), [issues]);
 }

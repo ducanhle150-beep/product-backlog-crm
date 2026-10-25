@@ -2,12 +2,15 @@ import type { BugSeverity, IssueType, Priority, Source, StatusId } from './types
 
 export const STATUSES: { id: StatusId; name: string; color: string }[] = [
   { id: 'backlog', name: 'Backlog', color: 'var(--st-backlog)' },
+  { id: 'planned', name: 'PLANNED', color: 'var(--st-planned)' },
   { id: 'todo', name: 'TO DO', color: 'var(--st-todo)' },
   { id: 'doing', name: 'DOING', color: 'var(--st-doing)' },
   { id: 'reviewing', name: 'REVIEWING', color: 'var(--st-reviewing)' },
   { id: 'retest', name: 'RETEST', color: 'var(--st-retest)' },
   { id: 'done', name: 'DONE', color: 'var(--st-done)' },
 ];
+/** Cột trên Bảng (Kanban) — chỉ task, không có cột Backlog. */
+export const BOARD_STATUSES = STATUSES.filter((s) => s.id !== 'backlog');
 export const statusName = (id: StatusId) => STATUSES.find((s) => s.id === id)!.name;
 
 export const TYPES: Record<IssueType, { name: string; color: string }> = {

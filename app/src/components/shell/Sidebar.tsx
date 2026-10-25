@@ -3,13 +3,14 @@ import type { Icon } from '@tabler/icons-react';
 import {
   IconApps, IconBuildingStore, IconCalendarTime, IconChevronDown, IconChevronRight, IconConfetti,
   IconDeviceDesktopAnalytics, IconHome, IconLayoutGrid, IconLayoutKanban, IconLayoutSidebarLeftCollapse,
-  IconListTree, IconMail, IconMessageCircle, IconProgressCheck, IconRun, IconSearch, IconSettings, IconTarget, IconUserShield,
+  IconListDetails, IconListTree, IconMail, IconMessageCircle, IconProgressCheck, IconRun, IconSearch, IconSettings, IconTarget, IconUserShield,
 } from '@tabler/icons-react';
 import './shell.css';
 
 interface Item { name: string; icon: Icon; color: string; suffix?: string; route?: string; chevron?: boolean }
 
 const WORK_ITEMS: Item[] = [
+  { name: 'Product Backlog', icon: IconListDetails, color: '#3b82f6', route: 'backlog/list' },
   { name: 'Bảng', icon: IconLayoutKanban, color: '#f0543c', route: 'board' },
   { name: 'Hôm nay', icon: IconLayoutGrid, color: '#3b82f6' },
   { name: 'Dự án', suffix: 'Dự án', icon: IconListTree, color: '#3b82f6' },
@@ -34,7 +35,7 @@ const BOTTOM: Item[] = [
 
 export function Sidebar({ route, go }: { route: string[]; go(path: string): void }) {
   const [open, setOpen] = useState(true);
-  const active = route[0] === 'board' ? 'Bảng' : route[0] === 'backlog' ? (route[1] === 'sprint' ? 'Sprint' : 'Bảng') : '';
+  const active = route[0] === 'board' ? 'Bảng' : route[0] === 'backlog' ? (route[1] === 'sprint' ? 'Sprint' : 'Product Backlog') : '';
 
   const row = (it: Item, nested = false) => {
     const I = it.icon;

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { IconArchive, IconLock, IconPlus, IconTrash, IconX } from '@tabler/icons-react';
+import { IconArchive, IconArrowRight, IconLock, IconPlus, IconTrash, IconX } from '@tabler/icons-react';
 import { format } from 'date-fns';
-import type { Issue, IssueType, Priority, Source, StatusId, TShirt } from '../../data/types';
+import type { Issue, IssueType, Priority, Source, TShirt } from '../../data/types';
 import { LABELS, MEMBERS } from '../../data/seed';
-import { PRIORITIES, SEVERITY, SOURCES, STATUSES, TYPES } from '../../data/meta';
+import { PRIORITIES, SEVERITY, SOURCES, TYPES } from '../../data/meta';
 import { useStore } from '../../store/useStore';
 import { useScoring } from '../../store/hooks';
-import { METHODS, methodById } from '../../lib/prioritization';
+import { methodById } from '../../lib/prioritization';
 import { investChecks, unresolvedBlockers } from '../../lib/readiness';
 import type { CheckResult } from '../../lib/readiness';
 import { StatusIcon, TypeIcon } from '../ui/icons';
@@ -53,7 +53,6 @@ function DrawerBody({ issue }: { issue: Issue }) {
   const store = useStore();
   const { updateIssue, epics, sprints, settings, issues } = store;
   const { ready, byId } = useScoring();
-  const [methodId, setMethodId] = useState(settings.activeMethod);
   const [newAc, setNewAc] = useState('');
   const up = (patch: Partial<Issue>, activity?: string) => updateIssue(issue.id, patch, activity);
   const r = ready(issue);
@@ -69,12 +68,8 @@ function DrawerBody({ issue }: { issue: Issue }) {
       </div>
 
       <div className="props">
-        <Prop label="Trạng thái">
-          <span className="row"><StatusIcon status={issue.status} />
-            <select className="select select--bare" value={issue.status} onChange={(e) => up({ status: e.target.value as StatusId }, `Trạng thái → ${e.target.value}`)}>
-              {STATUSES.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </span>
+        <Prop label="Vị trí">
+          <span className="row"><StatusIcon status="backlog" /><span>Product Backlog{issue.sprintId ? ` · ${sprints.find((s) => s.id === issue.sprintId)?.name}` : ''}</span></span>
         </Prop>
         <Prop label="Loại">
           <span className="row"><TypeIcon type={issue.type} />
@@ -96,8 +91,8 @@ function DrawerBody({ issue }: { issue: Issue }) {
         </Prop>
         <Prop label="Sprint">
           <select className="select select--bare" value={issue.sprintId ?? ''} onChange={(e) => store.moveToSprint(issue.id, e.target.value || undefined)}>
-            <option value="">Backlog</option>
-            {sprints.filter((s) => s.state !== 'completed' || s.id === issue.sprintId).map((s) => <option key={s.id} value={s.id}>{s.name}{s.state === 'active' ? ' (đang chạy)' : ''}</option>)}
+            <option value="">Chưa vào sprint</option>
+            {sprints.filter((s) => s.state === 'planned').map((s) => <option key={s.id} value={s.id}>{s.name} (planned)</option>)}
           </select>
         </Prop>
         <Prop label="Epic">
@@ -227,15 +222,8 @@ function DrawerBody({ issue }: { issue: Issue }) {
         <Checklist items={settings.dodItems.map((d) => ({ id: d.id, text: d.text, ok: !!issue.dod[d.id], auto: false }))} onToggle={(id, v) => up({ dod: { ...issue.dod, [id]: v } })} />
       </Section>
 
-      <Section
-        title="Ưu tiên"
-        right={
-          <select className="select" value={methodId} onChange={(e) => setMethodId(e.target.value)}>
-            {METHODS.map((m) => <option key={m.id} value={m.id}>{m.name}{m.id === settings.activeMethod ? ' (đang dùng)' : ''}</option>)}
-          </select>
-        }
-      >
-        <ScoreEditor issue={issue} method={methodById(methodId)} />
+      <Section title={`Ưu tiên · ${methodById(settings.activeMethod).name}`} right={<span className="muted small">Đổi method trong Thiết lập</span>}>
+        <ScoreEditor issue={issue} method={methodById(settings.activeMethod)} />
       </Section>
 
       {issue.votes.length > 0 && (
@@ -256,6 +244,15 @@ function DrawerBody({ issue }: { issue: Issue }) {
       </Section>
 
       <div className="row" style={{ padding: '8px 0 24px' }}>
+        <Button
+          variant="primary"
+          size="sm"
+          icon={<IconArrowRight size={14} />}
+          title={r.ready ? 'Chuyển thành task trên Bảng (cột PLANNED)' : 'Chưa đạt Definition of Ready'}
+          onClick={() => { store.pushToBoard(issue.id); store.openIssue(null); }}
+        >
+          Đẩy sang Bảng{!r.ready ? ' (chưa Ready)' : ''}
+        </Button>
         <Button variant="danger" size="sm" icon={<IconArchive size={14} />} onClick={() => { store.archiveIssue(issue.id); store.openIssue(null); }}>
           Lưu trữ (lỗi thời)
         </Button>
@@ -268,7 +265,7 @@ export function IssueDrawer() {
   const id = useStore((s) => s.selectedIssueId);
   const issue = useStore((s) => s.issues.find((i) => i.id === id));
   const openIssue = useStore((s) => s.openIssue);
-  if (!issue) return null;
+  if (!issue || issue.kind === 'task') return null;
   return (
     <aside className="drawer" key={issue.id}>
       <header className="drawer__head">

@@ -76,7 +76,7 @@ function SprintHeader({ sprint, issues, go }: { sprint: Sprint; issues: Issue[];
     <>
       <strong>{sprint.name}</strong>
       <Badge color={sprint.state === 'active' ? '#4ade80' : 'var(--text-2)'} bg={sprint.state === 'active' ? 'var(--success-soft)' : undefined}>
-        {sprint.state === 'active' ? 'Đang chạy' : 'Planned'}
+        Planned
       </Badge>
       <span className="muted">
         {format(parseISO(sprint.startDate), 'MMM d')} – {format(parseISO(sprint.endDate), 'MMM d')} · {issues.length} issue · {pts}
@@ -85,7 +85,7 @@ function SprintHeader({ sprint, issues, go }: { sprint: Sprint; issues: Issue[];
       {sprint.goal && <span className="muted truncate" style={{ maxWidth: 420 }}>· {sprint.goal}</span>}
       <span className="grow" />
       <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); go('backlog/sprint'); }}>
-        {sprint.state === 'active' ? 'Xem sprint' : 'Plan sprint'}
+        Plan sprint
       </Button>
     </>
   );
@@ -144,7 +144,7 @@ function StoryMapView({ issues, sprints }: { issues: Issue[]; sprints: Sprint[] 
   const epics = useStore((s) => s.epics);
   const openIssue = useStore((s) => s.openIssue);
   const lanes = [
-    ...sprints.filter((s) => s.state !== 'completed').map((s) => ({ id: s.id, name: s.name })),
+    ...sprints.filter((s) => s.state === 'planned').map((s) => ({ id: s.id, name: s.name })),
     { id: BACKLOG, name: 'Backlog' },
   ];
   const cell = (list: Issue[]) =>
@@ -193,12 +193,14 @@ export function ListView({ go }: { go(path: string): void }) {
   const [view, setView] = useState<'list' | 'buckets' | 'map'>('list');
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
-  const openSprints = sprints.filter((s) => s.state !== 'completed').sort((a, b) => (a.state === 'active' ? -1 : b.state === 'active' ? 1 : a.startDate.localeCompare(b.startDate)));
-  const visible = useMemo(() => issues.filter(filter).sort((a, b) => a.rank - b.rank), [issues, filter]);
+  const openSprints = sprints.filter((s) => s.state === 'planned').sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const active = sprints.find((s) => s.state === 'active');
+  const activeTasks = active ? issues.filter((i) => i.sprintId === active.id && i.kind === 'task' && !i.archived) : [];
+  const visible = useMemo(() => issues.filter((i) => i.kind === 'backlog').filter(filter).sort((a, b) => a.rank - b.rank), [issues, filter]);
   const groups = useMemo(() => {
     const g = new Map<string, Issue[]>();
     for (const s of openSprints) g.set(s.id, visible.filter((i) => i.sprintId === s.id));
-    g.set(BACKLOG, visible.filter((i) => !i.sprintId && i.status !== 'done'));
+    g.set(BACKLOG, visible.filter((i) => !i.sprintId));
     return g;
   }, [visible, openSprints]);
 
@@ -239,9 +241,14 @@ export function ListView({ go }: { go(path: string): void }) {
       </div>
 
       {view === 'buckets' && <BucketsView issues={backlogIssues} />}
-      {view === 'map' && <StoryMapView issues={visible.filter((i) => i.status !== 'done' || i.sprintId)} sprints={sprints} />}
+      {view === 'map' && <StoryMapView issues={visible} sprints={sprints} />}
       {view === 'list' && (
         <div className="list-scroll">
+          {active && (
+            <button className="active-sprint-link" onClick={() => go('board')}>
+              <StatusIcon status="doing" /> <strong>{active.name}</strong> đang chạy · {activeTasks.length} task · {points(activeTasks)} pt đã chuyển sang Bảng <span className="link-btn">Mở Bảng →</span>
+            </button>
+          )}
           <button className="create-sprint" onClick={() => createSprint()}><IconPlus size={15} /> Tạo sprint</button>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             {openSprints.map((s) => (

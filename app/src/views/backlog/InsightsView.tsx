@@ -1,11 +1,10 @@
 import { IconAlertTriangle, IconCircleCheck, IconInfoCircle } from '@tabler/icons-react';
 import { useStore } from '../../store/useStore';
 import { useBacklogIssues, useScoring } from '../../store/hooks';
-import { averageVelocity, isStale, points, sprintIssues } from '../../lib/metrics';
+import { averageVelocity, isStale, points } from '../../lib/metrics';
 import { deep, unresolvedBlockers } from '../../lib/readiness';
 import { rankByMethod } from '../../lib/prioritization';
 import { SEVERITY } from '../../data/meta';
-import { BurndownChart, VelocityChart } from '../../components/charts';
 import { Progress } from '../../components/ui/primitives';
 import './insights.css';
 
@@ -26,7 +25,7 @@ function Kpi({ label, value, sub, level }: { label: string; value: string | numb
   );
 }
 
-function BarList({ rows }: { rows: { label: string; value: number; color: string; note?: string }[] }) {
+export function BarList({ rows }: { rows: { label: string; value: number; color: string; note?: string }[] }) {
   const max = Math.max(1, ...rows.map((r) => r.value));
   return (
     <div className="barlist">
@@ -48,7 +47,6 @@ export function InsightsView() {
   const backlog = useBacklogIssues();
   const { method, settings, score, ready, byId } = useScoring();
   const now = new Date();
-  const active = sprints.find((s) => s.state === 'active');
   const velocity = averageVelocity(sprints, issues);
 
   // Top ~3 sprint của backlog theo velocity.
@@ -64,12 +62,8 @@ export function InsightsView() {
   const ranked = rankByMethod(backlog, method, settings);
   const lowTier = ranked.filter((r) => r.cls && r.cls.order >= 3).length;
   const d = deep(backlog, (i) => score(i).score !== null, now);
-  const activeItems = active ? sprintIssues(active, issues) : [];
-  const activeCommitted = points(activeItems);
 
   const signals: { level: Level; text: string }[] = [];
-  if (active && activeCommitted > velocity * 1.15) signals.push({ level: 'bad', text: `${active.name} commit ${activeCommitted} pt, vượt velocity TB ${velocity} pt — rủi ro carry-over lớn.` });
-  if (activeItems.filter((i) => i.status === 'reviewing').length > 4) signals.push({ level: 'warn', text: `${activeItems.filter((i) => i.status === 'reviewing').length} item kẹt ở REVIEWING — cân nhắc giới hạn WIP (action item retro Sprint 3).` });
   if (top.length && topReady / top.length < 0.6) signals.push({ level: 'warn', text: `Chỉ ${topReady}/${top.length} item top backlog đạt Definition of Ready — cần grooming trước planning.` });
   if (unscored.length) signals.push({ level: 'warn', text: `${unscored.length} item chưa chấm ${method.name} — backlog không thể sắp xếp có căn cứ.` });
   if (noGoal.length / Math.max(1, backlog.length) > 0.3) signals.push({ level: 'warn', text: `${noGoal.length} item không gắn strategic goal — dấu hiệu "dumping ground".` });
@@ -85,8 +79,7 @@ export function InsightsView() {
   return (
     <div className="view-scroll insights">
       <div className="kpi-row">
-        <Kpi label="Velocity TB (3 sprint)" value={`${velocity} pt`} sub={active ? `${active.name}: ${activeCommitted} pt commit` : undefined} level={active && activeCommitted > velocity * 1.15 ? 'bad' : 'good'} />
-        <Kpi label="Backlog" value={`${backlog.length} item`} sub={`${points(backlog)} pt ≈ ${velocity ? (points(backlog) / velocity).toFixed(1) : '–'} sprint`} />
+        <Kpi label="Backlog" value={`${backlog.length} item`} sub={`${points(backlog)} pt ≈ ${velocity ? (points(backlog) / velocity).toFixed(1) : '–'} sprint (velocity ${velocity} pt)`} />
         <Kpi label="Top 3 sprint đạt DoR" value={`${topReady}/${top.length}`} sub={`${Math.round((topReady / Math.max(1, top.length)) * 100)}%`} level={topReady / Math.max(1, top.length) >= 0.6 ? 'good' : 'warn'} />
         <Kpi label="Chưa estimate" value={unestimated.length} sub={oversized.length ? `${oversized.length} item > 8 pt cần tách` : 'Không có item quá lớn'} level={oversized.length ? 'warn' : 'good'} />
         <Kpi label="Bị block" value={blocked.length} sub="dependency chưa xong" level={blocked.length ? 'warn' : 'good'} />
@@ -94,15 +87,6 @@ export function InsightsView() {
       </div>
 
       <div className="ins-grid">
-        <div className="card">
-          <div className="card__head">Velocity <span className="muted small">— committed vs completed mỗi sprint</span></div>
-          <div className="card__body"><VelocityChart sprints={sprints} issues={issues} /></div>
-        </div>
-        <div className="card">
-          <div className="card__head">Burndown {active ? `· ${active.name}` : ''}</div>
-          <div className="card__body">{active ? <BurndownChart sprint={active} issues={activeItems} /> : <div className="muted">Không có sprint đang chạy.</div>}</div>
-        </div>
-
         <div className="card">
           <div className="card__head">Backlog health signals</div>
           <div className="card__body">

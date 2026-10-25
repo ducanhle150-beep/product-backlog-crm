@@ -5,7 +5,7 @@ import { IconCalendarEvent, IconPlus } from '@tabler/icons-react';
 import { differenceInCalendarDays, format, parseISO } from 'date-fns';
 import type { Issue, StatusId } from '../../data/types';
 import { LABELS } from '../../data/seed';
-import { STATUSES } from '../../data/meta';
+import { BOARD_STATUSES } from '../../data/meta';
 import { useStore } from '../../store/useStore';
 import { useIssueFilter } from '../../store/ui';
 import { PriorityIcon, StatusIcon, TypeIcon } from '../../components/ui/icons';
@@ -16,7 +16,6 @@ import './board.css';
 const COLUMN_LIMIT = 20;
 
 function Card({ issue }: { issue: Issue }) {
-  const openIssue = useStore((s) => s.openIssue);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: issue.id });
   const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)`, zIndex: 10 } : undefined;
   const labels = LABELS.filter((l) => issue.labelIds.includes(l.id));
@@ -25,7 +24,6 @@ function Card({ issue }: { issue: Issue }) {
       ref={setNodeRef}
       style={style}
       className={`kcard ${isDragging ? 'is-dragging' : ''}`}
-      onClick={() => openIssue(issue.id)}
       {...listeners}
       {...attributes}
     >
@@ -48,11 +46,11 @@ function Card({ issue }: { issue: Issue }) {
   );
 }
 
-function Column({ status, issues }: { status: (typeof STATUSES)[number]; issues: Issue[] }) {
+function Column({ status, issues }: { status: (typeof BOARD_STATUSES)[number]; issues: Issue[] }) {
   const [expanded, setExpanded] = useState(false);
   const { setNodeRef, isOver } = useDroppable({ id: status.id });
   const createIssue = useStore((s) => s.createIssue);
-  const openIssue = useStore((s) => s.openIssue);
+  const activeSprintId = useStore((s) => s.sprints.find((sp) => sp.state === 'active')?.id);
   const shown = expanded ? issues : issues.slice(0, COLUMN_LIMIT);
   return (
     <section ref={setNodeRef} className={`kcol ${isOver ? 'is-over' : ''} ${issues.length === 0 ? 'kcol--empty' : ''}`}>
@@ -67,7 +65,7 @@ function Column({ status, issues }: { status: (typeof STATUSES)[number]; issues:
           <button className="kcol__more" onClick={() => setExpanded(true)}>Còn {issues.length - COLUMN_LIMIT} issue</button>
         )}
       </div>
-      <button className="kcol__new" onClick={() => openIssue(createIssue({ title: 'Issue mới', status: status.id }).id)}>
+      <button className="kcol__new" onClick={() => createIssue({ title: 'Task mới', kind: 'task', status: status.id, sprintId: activeSprintId })}>
         <IconPlus size={15} /> New issue
       </button>
     </section>
@@ -87,10 +85,10 @@ export function KanbanBoard({ go }: { go(path: string): void }) {
 
   const active = sprints.find((s) => s.state === 'active');
   const visible = useMemo(
-    () => issues.filter(filter).filter((i) => !sprintOnly || !active || i.sprintId === active.id).sort((a, b) => a.rank - b.rank),
+    () => issues.filter((i) => i.kind === 'task').filter(filter).filter((i) => !sprintOnly || !active || i.sprintId === active.id).sort((a, b) => a.rank - b.rank),
     [issues, filter, sprintOnly, active],
   );
-  const all = issues.filter((i) => !i.archived);
+  const all = issues.filter((i) => i.kind === 'task' && !i.archived);
 
   const onDragEnd = (e: DragEndEvent) => {
     const to = e.over?.id as StatusId | undefined;
@@ -101,7 +99,7 @@ export function KanbanBoard({ go }: { go(path: string): void }) {
       setPendingDone(issue);
       return;
     }
-    updateIssue(issue.id, { status: to }, `Chuyển trạng thái → ${STATUSES.find((s) => s.id === to)!.name}`);
+    updateIssue(issue.id, { status: to }, `Chuyển trạng thái → ${BOARD_STATUSES.find((s) => s.id === to)!.name}`);
   };
 
   const daysLeft = active ? differenceInCalendarDays(parseISO(active.endDate), new Date()) : 0;
@@ -131,7 +129,7 @@ export function KanbanBoard({ go }: { go(path: string): void }) {
       </div>
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <div className="board">
-          {STATUSES.map((s) => <Column key={s.id} status={s} issues={visible.filter((i) => i.status === s.id)} />)}
+          {BOARD_STATUSES.map((s) => <Column key={s.id} status={s} issues={visible.filter((i) => i.status === s.id)} />)}
           <button className="board__add" aria-label="Thêm cột"><IconPlus size={16} /></button>
         </div>
       </DndContext>

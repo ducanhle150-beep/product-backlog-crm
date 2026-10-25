@@ -1,4 +1,4 @@
-import { IconAdjustmentsHorizontal, IconArrowsSort, IconBell, IconChevronDown, IconDotsVertical, IconFilter, IconLayoutKanban, IconLayoutList, IconLayoutSidebar, IconPlus, IconSearch } from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal, IconArrowsSort, IconBell, IconChevronDown, IconDotsVertical, IconFilter, IconLayoutSidebar, IconPlus, IconSearch } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { MEMBERS } from '../../data/seed';
 import { useStore } from '../../store/useStore';
@@ -14,7 +14,7 @@ export function PageHeader({ title, icon }: { title: string; icon: ReactNode }) 
   );
 }
 
-export function ProjectToolbar({ tab, go, onNewIssue }: { tab: 'backlog' | 'board'; go(path: string): void; onNewIssue(): void }) {
+export function ProjectToolbar({ go, tabs, onNewIssue }: { go(path: string): void; tabs?: ReactNode; onNewIssue(): void }) {
   const { query, setQuery } = useUi();
   const inboxCount = useStore((s) => s.ideas.filter((i) => i.status === 'inbox').length);
   return (
@@ -24,14 +24,7 @@ export function ProjectToolbar({ tab, go, onNewIssue }: { tab: 'backlog' | 'boar
         <strong>MIDA Fraud Feature</strong>
         <IconChevronDown size={14} className="muted" />
       </button>
-      <div className="seg">
-        <button className={tab === 'backlog' ? 'is-active' : ''} onClick={() => go('backlog/list')}>
-          <IconLayoutList size={16} stroke={1.6} /> Backlog
-        </button>
-        <button className={tab === 'board' ? 'is-active' : ''} onClick={() => go('board')}>
-          <IconLayoutKanban size={16} stroke={1.6} /> Bảng
-        </button>
-      </div>
+      {tabs}
       <label className="search">
         <IconSearch size={15} className="muted" />
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm issue theo mã hoặc tiêu đề..." />

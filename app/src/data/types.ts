@@ -1,6 +1,8 @@
 // Domain model cho prototype Product Backlog (replica "Quản lý công việc" — MIDA Fraud Feature).
 
-export type StatusId = 'backlog' | 'todo' | 'doing' | 'reviewing' | 'retest' | 'done';
+export type StatusId = 'backlog' | 'planned' | 'todo' | 'doing' | 'reviewing' | 'retest' | 'done';
+/** backlog = item trong Product Backlog (có cấu hình PM); task = đã đẩy sang Bảng để thực thi. */
+export type IssueKind = 'backlog' | 'task';
 export type IssueType = 'epic' | 'story' | 'task' | 'bug' | 'spike' | 'techdebt' | 'improvement';
 export type Priority = 'urgent' | 'high' | 'medium' | 'low';
 export type BugSeverity = 'critical' | 'important' | 'minor';
@@ -75,6 +77,7 @@ export interface Issue {
   id: string;
   key: string; // FRAUD_F-24
   num: number;
+  kind: IssueKind;
   title: string;
   type: IssueType;
   status: StatusId;

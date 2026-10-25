@@ -8,6 +8,12 @@ export function StatusIcon({ status, size = 14 }: { status: StatusId; size?: num
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }} aria-label={status}>
       {status === 'backlog' && <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth="1.5" strokeDasharray="2 2" />}
+      {status === 'planned' && (
+        <>
+          <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth="1.5" />
+          <circle cx={c} cy={c} r={1.4} fill={color} />
+        </>
+      )}
       {status === 'todo' && <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth="1.5" />}
       {(status === 'doing' || status === 'reviewing') && <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth="1.8" />}
       {status === 'retest' && (

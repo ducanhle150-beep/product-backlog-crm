@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { IconAlertTriangle, IconArrowLeft, IconArrowRight, IconFlag, IconLock, IconPlayerPlay, IconPlus, IconTarget } from '@tabler/icons-react';
+import { IconAlertTriangle, IconArrowLeft, IconArrowRight, IconChartLine, IconFlag, IconLock, IconPlayerPlay, IconPlus, IconTarget } from '@tabler/icons-react';
 import { differenceInCalendarDays, format, parseISO } from 'date-fns';
 import type { Issue, Sprint } from '../../data/types';
 import { MEMBERS } from '../../data/seed';
@@ -10,7 +10,6 @@ import { averageVelocity, points, sprintIssues } from '../../lib/metrics';
 import { unresolvedBlockers } from '../../lib/readiness';
 import { StatusIcon, TypeIcon } from '../../components/ui/icons';
 import { Avatar, Badge, Button, Modal, Progress, memberById } from '../../components/ui/primitives';
-import { BurndownChart } from '../../components/charts';
 import { ReadyDot, ScoreBadge } from './BacklogRow';
 import './sprint.css';
 
@@ -130,7 +129,7 @@ function ActiveSprint({ sprint, items }: { sprint: Sprint; items: Issue[] }) {
   const done = items.filter((i) => i.status === 'done');
   const daysLeft = differenceInCalendarDays(parseISO(sprint.endDate), new Date());
   const added = sprint.scopeChanges.filter((c) => c.delta > 0);
-  const byStatus = ['todo', 'doing', 'reviewing', 'retest', 'done'].map((s) => ({ s, n: items.filter((i) => i.status === s).length }));
+  const byStatus = ['planned', 'todo', 'doing', 'reviewing', 'retest', 'done'].map((s) => ({ s, n: items.filter((i) => i.status === s).length }));
   return (
     <div className="sp-active">
       <div className="sp-kpis">
@@ -139,15 +138,15 @@ function ActiveSprint({ sprint, items }: { sprint: Sprint; items: Issue[] }) {
         <div className="card kpi"><div className="muted small">Scope change</div><strong>+{points(added.map((c) => byId.get(c.issueId)!).filter(Boolean))} pt</strong><span className="muted small">{added.length} item thêm sau khi start</span></div>
         <div className="card kpi"><div className="muted small">Theo trạng thái</div><span className="row" style={{ gap: 10, flexWrap: 'wrap' }}>{byStatus.map(({ s, n }) => <span key={s} className="row small" style={{ gap: 4 }}><StatusIcon status={s as Issue['status']} />{n}</span>)}</span></div>
       </div>
-      <div className="sp-two">
-        <div className="card">
-          <div className="card__head">Burndown <span className="muted small">— scope bị khoá khi sprint chạy; item thêm sau được tính là scope change</span></div>
-          <div className="card__body"><BurndownChart sprint={sprint} issues={items} /></div>
+      <div className="card">
+        <div className="card__head">
+          <IconLock size={15} /> Task trên Bảng · {items.length}
+          <span className="muted small">— scope khoá khi sprint chạy; item thêm sau tính là scope change</span>
+          <span className="grow" />
+          <Button size="sm" variant="ghost" icon={<IconChartLine size={14} />} onClick={() => { window.location.hash = '/board/insights'; }}>Velocity & burndown</Button>
+          <Button size="sm" variant="primary" icon={<IconFlag size={14} />} onClick={() => setCompleting(true)}>Hoàn thành sprint</Button>
         </div>
-        <div className="card">
-          <div className="card__head"><IconLock size={15} /> Sprint backlog · {items.length}<span className="grow" /><Button size="sm" variant="primary" icon={<IconFlag size={14} />} onClick={() => setCompleting(true)}>Hoàn thành sprint</Button></div>
-          <div className="card__body sp-list">{items.map((i) => <ItemLine key={i.id} issue={i} action={<StatusIcon status={i.status} />} />)}</div>
-        </div>
+        <div className="card__body sp-list">{items.map((i) => <ItemLine key={i.id} issue={i} action={<StatusIcon status={i.status} />} />)}</div>
       </div>
       {completing && <CompleteDialog sprint={sprint} items={items} onClose={() => setCompleting(false)} />}
     </div>
@@ -188,7 +187,7 @@ function PlannedSprint({ sprint, items }: { sprint: Sprint; items: Issue[] }) {
         <label className="field"><span>Kết thúc</span><input className="input" type="date" value={sprint.endDate} onChange={(e) => store.updateSprint(sprint.id, { endDate: e.target.value })} /></label>
         <span className="grow" />
         <Button variant="primary" icon={<IconPlayerPlay size={14} />} disabled={hasActive || !items.length} title={hasActive ? 'Đang có sprint chạy — hoàn thành sprint đó trước' : ''} onClick={() => store.startSprint(sprint.id)}>
-          Start sprint
+          Start sprint · đẩy {items.length} item sang Bảng
         </Button>
       </div>
       <div className="sp-plan__grid">

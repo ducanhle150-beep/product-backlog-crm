@@ -5,7 +5,7 @@ import type { Issue } from '../../data/types';
 import { useStore } from '../../store/useStore';
 import { useBacklogIssues } from '../../store/hooks';
 import { useIssueFilter } from '../../store/ui';
-import { METHODS, formatScore, methodById, rankByMethod } from '../../lib/prioritization';
+import { formatScore, methodById, rankByMethod } from '../../lib/prioritization';
 import type { PrioritizationMethod, ScoredIssue } from '../../lib/prioritization';
 import { computeCaf, PHASE_MEANING } from '../../lib/prioritization/saeIceCaf';
 import { KANO, MOSCOW, analyzeMoscowVotes } from '../../lib/prioritization/categorical';
@@ -175,7 +175,6 @@ function VotesCells({ issue }: { issue: Issue }) {
 export function PrioritizationView() {
   const settings = useStore((s) => s.settings);
   const issues = useStore((s) => s.issues);
-  const updateSettings = useStore((s) => s.updateSettings);
   const setScore = useStore((s) => s.setScore);
   const updateIssue = useStore((s) => s.updateIssue);
   const reorder = useStore((s) => s.reorder);
@@ -189,7 +188,7 @@ export function PrioritizationView() {
   const [pairwise, setPairwise] = useState(false);
 
   const scopeIssues = useMemo(
-    () => (scope === 'backlog' ? backlog : issues.filter((i) => !i.archived && i.status !== 'done').sort((a, b) => a.rank - b.rank)).filter(filter),
+    () => (scope === 'backlog' ? backlog : issues.filter((i) => i.kind === 'backlog' && !i.archived).sort((a, b) => a.rank - b.rank)).filter(filter),
     [scope, backlog, issues, filter],
   );
   const rows = useMemo(() => rankByMethod(scopeIssues, method, settings), [scopeIssues, method, settings]);
@@ -205,13 +204,10 @@ export function PrioritizationView() {
 
   return (
     <div className="view-scroll prio">
-      <div className="method-tabs">
-        {METHODS.map((m) => (
-          <button key={m.id} className={`method-tab ${m.id === method.id ? 'is-active' : ''}`} onClick={() => { updateSettings({ activeMethod: m.id }); setFocusCol(''); }}>
-            {m.short}
-            {m.id === 'sae-ice-caf' && <span className="method-tab__tag">Team</span>}
-          </button>
-        ))}
+      <div className="method-current">
+        <span className="muted small">Method đang dùng</span>
+        <span className="method-tab is-active">{method.short}{method.id === 'sae-ice-caf' && <span className="method-tab__tag">Team</span>}</span>
+        <button className="link-btn small" onClick={() => { window.location.hash = '/backlog/settings'; }}>Đổi method trong Thiết lập →</button>
       </div>
 
       <div className="prio-top">
@@ -248,7 +244,7 @@ export function PrioritizationView() {
       <div className="prio-bar">
         <div className="seg seg--sm">
           <button className={scope === 'backlog' ? 'is-active' : ''} onClick={() => setScope('backlog')}>Backlog ({backlog.length})</button>
-          <button className={scope === 'open' ? 'is-active' : ''} onClick={() => setScope('open')}>Tất cả item mở</button>
+          <button className={scope === 'open' ? 'is-active' : ''} onClick={() => setScope('open')}>Gồm cả sprint planned</button>
         </div>
         {method.id === 'wsjf' && (
           <select className="select" value={focusCol} onChange={(e) => setFocusCol(e.target.value)} title="Slide 11: chấm từng category một">
