@@ -1,4 +1,4 @@
-import { IconAdjustmentsHorizontal, IconArrowsSort, IconBell, IconChevronDown, IconDotsVertical, IconLayoutSidebar, IconPlus, IconSearch } from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal, IconArrowsSort, IconBell, IconChevronDown, IconDotsVertical, IconPlus, IconSearch } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { MEMBERS } from '../../data/seed';
 import { useStore } from '../../store/useStore';
@@ -47,7 +47,6 @@ export function FilterBar({ right }: { right?: ReactNode }) {
   const { onlyMine, toggleMine } = useUi();
   return (
     <div className="filter-bar">
-      <button className="icon-btn"><IconLayoutSidebar size={16} stroke={1.6} /></button>
       <FilterMenu />
       <button className={`pill ${onlyMine ? 'is-on' : ''}`} onClick={toggleMine}>Only mine</button>
       <AvatarStack ids={FRAUD_MEMBERS} />

@@ -18,12 +18,14 @@ const COLUMN_LIMIT = 20;
 function Card({ issue }: { issue: Issue }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: issue.id });
   const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)`, zIndex: 10 } : undefined;
+  const openIssue = useStore((s) => s.openIssue);
   const labels = LABELS.filter((l) => issue.labelIds.includes(l.id));
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={`kcard ${isDragging ? 'is-dragging' : ''}`}
+      onClick={() => openIssue(issue.id)}
       {...listeners}
       {...attributes}
     >

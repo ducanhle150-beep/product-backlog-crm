@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { IconAdjustments, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
-import type { ChecklistItem, Settings } from '../../data/types';
+import type { ChecklistItem, Epic, Settings } from '../../data/types';
 import { useStore } from '../../store/useStore';
 import { METHODS, methodById } from '../../lib/prioritization';
 import { Button, Modal } from '../../components/ui/primitives';
@@ -186,6 +186,46 @@ function TemplatePicker() {
   );
 }
 
+/** Quản lý epic — thay cho panel Epic mở từ nút sidebar trên Bảng / Backlog. Lọc theo epic dùng menu Filter. */
+function EpicsEditor() {
+  const epics = useStore((s) => s.epics);
+  const goals = useStore((s) => s.settings.goals);
+  const issues = useStore((s) => s.issues);
+  const createEpic = useStore((s) => s.createEpic);
+  const updateEpic = useStore((s) => s.updateEpic);
+  const deleteEpic = useStore((s) => s.deleteEpic);
+  const [removing, setRemoving] = useState<Epic | null>(null);
+  const progress = (id: string) => {
+    const list = issues.filter((i) => i.epicId === id && !i.archived);
+    return { done: list.filter((i) => i.status === 'done').length, total: list.length };
+  };
+  return (
+    <div className="st-list">
+      {epics.map((e) => {
+        const p = progress(e.id);
+        return (
+          <div key={e.id} className="row">
+            <input type="color" className="st-color" value={e.color} onChange={(ev) => updateEpic(e.id, { color: ev.target.value })} />
+            <input className="input grow" value={e.name} onChange={(ev) => updateEpic(e.id, { name: ev.target.value })} />
+            <select className="select st-epic-goal" value={e.goalId ?? ''} onChange={(ev) => updateEpic(e.id, { goalId: ev.target.value || undefined })}>
+              <option value="">Chưa gắn goal</option>
+              {goals.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select>
+            <span className="muted small st-epic-progress" title="Issue hoàn thành / tổng issue thuộc epic">{p.done}/{p.total}</span>
+            <button className="icon-btn" onClick={() => (p.total ? setRemoving(e) : deleteEpic(e.id))}><IconTrash size={14} /></button>
+          </div>
+        );
+      })}
+      <Button size="sm" variant="ghost" icon={<IconPlus size={14} />} onClick={() => createEpic('Epic mới')}>Thêm epic</Button>
+      {removing && (
+        <Modal title={`Xoá epic "${removing.name}"?`} onClose={() => setRemoving(null)} footer={<><Button variant="ghost" onClick={() => setRemoving(null)}>Huỷ</Button><Button variant="danger" onClick={() => { deleteEpic(removing.id); setRemoving(null); }}>Xoá</Button></>}>
+          {progress(removing.id).total} issue đang thuộc epic này sẽ chuyển về "Không thuộc epic nào".
+        </Modal>
+      )}
+    </div>
+  );
+}
+
 export function SettingsView() {
   const settings = useStore((s) => s.settings);
   const updateSettings = useStore((s) => s.updateSettings);
@@ -208,6 +248,10 @@ export function SettingsView() {
             ))}
             <Button size="sm" variant="ghost" icon={<IconPlus size={14} />} onClick={() => up({ goals: [...settings.goals, { id: uid('g'), name: 'Goal mới', color: '#8b5cf6' }] })}>Thêm goal</Button>
           </div>
+        </Card>
+
+        <Card title="Epics" desc="Nhóm item / issue theo epic, gắn với strategic goal. Tiến độ = issue hoàn thành / tổng issue thuộc epic. Lọc theo epic trên Bảng và Backlog dùng menu Filter.">
+          <EpicsEditor />
         </Card>
 
         <Card title="Definition of Ready" desc="Item phải đạt trước khi được kéo vào sprint. 5 tiêu chí đầu tự kiểm tra từ dữ liệu (user story, AC, estimate, ≤ 8 pt, không bị block).">

@@ -13,3 +13,5 @@
 .st-full { width: 100%; }
 .st-numcol { width: 96px; text-align: right; }
 .st-num { width: 88px; text-align: right; }
+.st-epic-goal { width: 190px; }
+.st-epic-progress { min-width: 32px; text-align: right; font-variant-numeric: tabular-nums; }

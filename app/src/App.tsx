@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Sidebar } from './components/shell/Sidebar';
 import { PageHeader, ProjectToolbar } from './components/shell/Toolbar';
 import { IssueDrawer } from './components/issue/IssueDrawer';
+import { IssueModal } from './components/issue/IssueModal';
 import { KanbanBoard } from './views/board/KanbanBoard';
 import { DeliveryInsights } from './views/board/DeliveryInsights';
 import { BacklogSection } from './views/backlog/BacklogSection';
@@ -60,6 +61,7 @@ export default function App() {
         {page === 'backlog' && <BacklogSection tab={route[1] ?? 'list'} go={go} views={VIEWS} />}
       </main>
       <IssueDrawer />
+      <IssueModal />
     </div>
   );
 }

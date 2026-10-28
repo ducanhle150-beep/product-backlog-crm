@@ -40,7 +40,12 @@ function IdeaCard({ idea }: { idea: Idea }) {
         <IconBulb size={16} color="#f59e0b" />
         <strong className="grow">{idea.title}</strong>
         <Badge>{SOURCES[idea.source]}</Badge>
-        <button className="idea__count" title="Thêm 1 lần được yêu cầu" onClick={() => updateIdea(idea.id, { requestCount: idea.requestCount + 1 })}>×{idea.requestCount} +1</button>
+        <button
+          className="idea__count"
+          title="Chuột trái: +1 lần được yêu cầu · Chuột phải: −1"
+          onClick={() => updateIdea(idea.id, { requestCount: idea.requestCount + 1 })}
+          onContextMenu={(e) => { e.preventDefault(); updateIdea(idea.id, { requestCount: Math.max(1, idea.requestCount - 1) }); }}
+        >+{idea.requestCount}</button>
       </div>
       {idea.description && <div className="muted" style={{ marginTop: 4 }}>{idea.description}</div>}
       {idea.quote && <div className="idea__quote"><IconQuote size={13} /> {idea.quote}</div>}

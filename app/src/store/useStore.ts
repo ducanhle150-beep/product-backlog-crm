@@ -49,6 +49,8 @@ export interface Store extends Data {
   moveToSprint(issueId: string, sprintId: string | undefined): void;
   /** Backlog item → task trên Bảng (cột PLANNED, vào sprint đang chạy nếu có). */
   pushToBoard(issueId: string): void;
+  /** Ngược với pushToBoard: issue rời Bảng (và sprint nếu có) về lại item backlog; mọi trường khác giữ nguyên. */
+  returnToBacklog(issueId: string): void;
   startSprint(id: string): void;
   completeSprint(id: string, carry: Record<string, 'next' | 'backlog'>): void;
 
@@ -58,6 +60,9 @@ export interface Store extends Data {
 
   updateSettings(patch: Partial<Settings>): void;
   createEpic(name: string): Epic;
+  updateEpic(id: string, patch: Partial<Epic>): void;
+  /** Xoá epic; issue thuộc epic đó chuyển về "Không thuộc epic nào". */
+  deleteEpic(id: string): void;
   reset(): void;
 }
 
@@ -69,10 +74,8 @@ export const useStore = create<Store>()(
     (set, get) => ({
       ...seed(),
       selectedIssueId: null,
-      openIssue: (id) => {
-        if (id && get().issues.find((i) => i.id === id)?.kind === 'task') return;
-        set({ selectedIssueId: id });
-      },
+      // Item backlog mở IssueDrawer, issue trên Bảng (kind 'task') mở IssueModal.
+      openIssue: (id) => set({ selectedIssueId: id }),
 
       updateIssue: (id, patch, activity) =>
         set((s) => ({
@@ -175,6 +178,13 @@ export const useStore = create<Store>()(
         if (active) return get().moveToSprint(issueId, active.id);
         get().updateIssue(issueId, { kind: 'task', status: 'planned' }, 'Đẩy sang Bảng');
       },
+      returnToBacklog: (issueId) => {
+        const issue = get().issues.find((i) => i.id === issueId);
+        if (!issue || issue.kind !== 'task') return;
+        // Có sprint → moveToSprint ghi scope change cho sprint đang chạy rồi đổi kind/status.
+        if (issue.sprintId) return get().moveToSprint(issueId, undefined);
+        get().updateIssue(issueId, { kind: 'backlog', status: 'backlog' }, 'Trả về Product Backlog');
+      },
 
       startSprint: (id) => {
         const s = get();
@@ -224,6 +234,12 @@ export const useStore = create<Store>()(
         set((s) => ({ epics: [...s.epics, epic] }));
         return epic;
       },
+      updateEpic: (id, patch) => set((s) => ({ epics: s.epics.map((e) => (e.id === id ? { ...e, ...patch } : e)) })),
+      deleteEpic: (id) =>
+        set((s) => ({
+          epics: s.epics.filter((e) => e.id !== id),
+          issues: s.issues.map((i) => (i.epicId === id ? { ...i, epicId: undefined } : i)),
+        })),
       reset: () => set({ ...seed(), selectedIssueId: null }),
     }),
     {
